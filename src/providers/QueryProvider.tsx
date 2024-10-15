@@ -1,4 +1,5 @@
 'use client'
+import { WagmiProvider } from 'wagmi';
 
 import {
   QueryClient,
@@ -8,6 +9,8 @@ import {
 // import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import * as React from 'react'
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental'
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { config } from '@/config';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -34,11 +37,15 @@ export function QueryProviders(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ReactQueryStreamedHydration>
-        {props.children}
-      </ReactQueryStreamedHydration>
-      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
-    </QueryClientProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <ReactQueryStreamedHydration>
+          <RainbowKitProvider>
+            {props.children}
+          </RainbowKitProvider>
+        </ReactQueryStreamedHydration>
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
+      </QueryClientProvider>
+    </WagmiProvider>
   )
 }
