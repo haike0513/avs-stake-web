@@ -1,10 +1,12 @@
 'use client'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { getEigenAPIURL } from './util';
 // import { getBaseURL } from './util';
 
 export const retrieveOperators = async () => {
   const options = {method: 'GET'};
-  return fetch('https://api.eigenexplorer.com/operators?withTvl=true&sortByTotalAvs=desc', options)
+  const baseURL = getEigenAPIURL();
+  return fetch(`${baseURL}/operators?withTvl=true&sortByTotalAvs=desc`, options)
   .then(response => response.json())
 }
 export function useRetrieveOperators(props: { page: number }) {

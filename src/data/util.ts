@@ -10,3 +10,15 @@ export function getBaseURL() {
   }
   return 'http://localhost:3000'
 }
+
+export function getEigenAPIURL() {
+
+  // return 'https://api.eigenexplorer.com'
+  return 'https://api-holesky.eigenexplorer.com'
+}
+
+export function getEigenAppURL() {
+
+  // return 'https://app.eigenlayer.xyz'
+  return 'https://holesky.eigenlayer.xyz'
+}

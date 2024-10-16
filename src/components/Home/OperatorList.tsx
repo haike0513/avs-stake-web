@@ -3,6 +3,7 @@ import { FC, Suspense, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { ReStakeDialog } from "./ReStakeDialog";
 import { useRetrieveOperators } from "@/data/eigen";
+import { getEigenAppURL } from "@/data/util";
 // import Image from "next/image";
 
 interface OperatorItem {
@@ -21,6 +22,7 @@ export const OperatorItem: FC<OperatorItem> = ({
 }) => {
 
   const [showDialog, setShowDialog] = useState(false);
+  const baseAppURL = getEigenAppURL();
   return (
     <div className="flex items-center justify-between bg-[#e0e0e0] rounded-lg p-4">
       <div className="flex items-center gap-2">
@@ -42,7 +44,7 @@ export const OperatorItem: FC<OperatorItem> = ({
 
       </div>
       <div>
-        <a href={`https://app.eigenlayer.xyz/operator/${operator}`} target="_blank">
+        <a href={`${baseAppURL}/operator/${operator}`} target="_blank">
           <Button onClick={() => {
             // setShowDialog(true);
           }}>
