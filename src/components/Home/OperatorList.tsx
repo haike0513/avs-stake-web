@@ -10,12 +10,14 @@ interface OperatorItem {
   tvl: string;
   logo?: string;
   totalStakers?: string;
+  operator?: string;
 }
 export const OperatorItem: FC<OperatorItem> = ({
   name,
   tvl,
   logo,
   totalStakers,
+  operator,
 }) => {
 
   const [showDialog, setShowDialog] = useState(false);
@@ -40,9 +42,13 @@ export const OperatorItem: FC<OperatorItem> = ({
 
       </div>
       <div>
-        <Button onClick={() => {
-          setShowDialog(true);
-        }}>ReStake Now</Button>
+        <a href={`https://app.eigenlayer.xyz/operator/${operator}`} target="_blank">
+          <Button onClick={() => {
+            // setShowDialog(true);
+          }}>
+            ReStake Now
+          </Button>
+        </a>
         <ReStakeDialog open={showDialog} onOpenChange={(open) => {
           setShowDialog(open);
         }}/>
@@ -82,6 +88,7 @@ export  function OperatorPages() {
           tvl={item.tvl.tvl}
           logo={item.metadataLogo}
           totalStakers={item.totalStakers}
+          operator={item.address}
         />
       })}
     </div>
