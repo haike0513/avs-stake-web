@@ -3,7 +3,7 @@ import { FC, Suspense, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { ReStakeDialog } from "./ReStakeDialog";
 import { useRetrieveOperators } from "@/data/eigen";
-import { getEigenAppURL } from "@/data/util";
+// import { getEigenAppURL } from "@/data/util";
 // import Image from "next/image";
 
 interface OperatorItem {
@@ -18,11 +18,11 @@ export const ReStakedAsset: FC<OperatorItem> = ({
   tvl,
   logo,
   totalStakers,
-  operator,
+  // operator,
 }) => {
 
   const [showDialog, setShowDialog] = useState(false);
-  const baseAppURL = getEigenAppURL();
+  // const baseAppURL = getEigenAppURL();
   return (
     <div className=" grid grid-cols-6 rounded-lg py-4">
       <div className="flex items-center gap-2">
@@ -48,16 +48,16 @@ export const ReStakedAsset: FC<OperatorItem> = ({
           }}>
             Claim
         </Button>
-        <a href={`${baseAppURL}/operator/${operator}`} target="_blank">
+        {/* <a href={`${baseAppURL}/operator/${operator}`} target="_blank"> */}
           <Button onClick={() => {
-            // setShowDialog(true);
+            setShowDialog(true);
           }}>
             ReStake Now
           </Button>
           <ReStakeDialog open={showDialog} onOpenChange={(open) => {
             setShowDialog(open);
           }}/>
-        </a>
+        {/* </a> */}
       </div>
 
 

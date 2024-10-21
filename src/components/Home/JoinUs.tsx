@@ -2,7 +2,7 @@ import { Button } from "../ui/button";
 
 export  function JoinUs() {
   return (
-    <div className="">
+    <div className=" my-10">
 
       <div>Become a Operator earn reward</div>
       <div className="grid grid-cols-2 h-40">
