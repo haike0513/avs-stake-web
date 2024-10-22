@@ -101,10 +101,10 @@ export  function ReStakedAssetsPages() {
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
         <div className="col-span-6 sm:col-span-4 grid grid-cols-4">
-          <div>Assets</div>
-          <div>Wallet Balance</div>
-          <div>Available to withdraw</div>
-          <div>ReStaked Balance</div>
+          <div className="flex justify-start items-center font-bold">Assets</div>
+          <div className="flex justify-end items-center font-bold">Wallet Balance</div>
+          <div className="flex justify-end items-center font-bold">Available to withdraw</div>
+          <div className="flex justify-end items-center font-bold">ReStaked Balance</div>
         </div>
         <div className="col-span-6 sm:col-span-2"></div>
       </div>
