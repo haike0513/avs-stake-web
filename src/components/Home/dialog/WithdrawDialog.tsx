@@ -12,7 +12,7 @@ export const WithdrawDialog = React.forwardRef<
     {...props}
   >
     <DialogContent ref={ref}>
-      <div>Select Operator</div>
+      <div>Withdraw</div>
       <div className="flex flex-col gap-4">
         <div>Operator</div>
         <div>Operator</div>

@@ -12,7 +12,7 @@ export const UnDelegateDialog = React.forwardRef<
     {...props}
   >
     <DialogContent ref={ref}>
-      <div>Select Operator</div>
+      <div>UnDelegate</div>
       <div className="flex flex-col gap-4">
         <div>Operator</div>
         <div>Operator</div>

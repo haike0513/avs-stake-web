@@ -16,7 +16,7 @@ interface OperatorItem {
 }
 export const ReStakedAsset: FC<OperatorItem> = ({
   name,
-  tvl,
+  // tvl,
   logo,
   totalStakers,
   // operator,
@@ -28,24 +28,26 @@ export const ReStakedAsset: FC<OperatorItem> = ({
   // const baseAppURL = getEigenAppURL();
   return (
     <div className=" grid grid-cols-6 rounded-lg py-4">
-      <div className="flex items-center gap-2">
-        {/* <Image src={logo || ''} alt="" width={40} height={40} /> */}
-        <img className=" rounded-md" src={logo || ''}  width={40} height={40}/>
-        <div  className=" w-32 truncate">
-          {name}
+      <div className=" col-span-6 sm:col-span-4 grid grid-cols-4">
+        <div className="flex items-center gap-2">
+          {/* <Image src={logo || ''} alt="" width={40} height={40} /> */}
+          <img className=" rounded-md" src={logo || ''}  width={40} height={40}/>
+          <div  className=" w-32 truncate">
+            {name}
+          </div>
+        </div>
+        <div className="flex justify-end items-center">
+          <div>{totalStakers}</div>
+        </div>
+        <div className="flex justify-end items-center">
+          <div>{totalStakers}</div>
+        </div>
+        <div className="flex justify-end items-center">
+          <div>{totalStakers}</div>
         </div>
       </div>
-      <div>
-        <div>{tvl}</div>
-      </div>
-      <div>
-        <div>{totalStakers}</div>
-      </div>
-      <div>
-        <div>{totalStakers}</div>
-      </div>
       
-      <div className=" col-span-2 flex items-center justify-end gap-2">
+      <div className="col-span-6 sm:col-span-2 flex items-center justify-center sm:justify-end gap-6 sm:gap-2 my-2 sm:my-0">
         <Button variant={"outline"} onClick={() => {
             setClaimDialog(true);
           }}>
@@ -98,11 +100,13 @@ export  function ReStakedAssetsPages() {
   return (
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
-        <div>Assets</div>
-        <div>Wallet Balance</div>
-        <div>Available to withdraw</div>
-        <div>ReStaked Balance</div>
-        <div className=" col-span-2"></div>
+        <div className="col-span-6 sm:col-span-4 grid grid-cols-4">
+          <div>Assets</div>
+          <div>Wallet Balance</div>
+          <div>Available to withdraw</div>
+          <div>ReStaked Balance</div>
+        </div>
+        <div className="col-span-6 sm:col-span-2"></div>
       </div>
       <div className=" flex flex-col gap-2">
         {list.map((item) => {

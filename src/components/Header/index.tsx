@@ -8,8 +8,8 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 export  function HomeHeader() {
   // const [showDialog, setShowDialog] = useState(false);
   return (
-    <div className=" flex justify-between py-6">
-      <div>AOS Network</div>
+    <div className=" flex items-center justify-between py-6">
+      <div className=' text-xl font-bold sm:text-3xl'>AOS Network</div>
       <div>
         <ConnectButton />
         {/* <Button

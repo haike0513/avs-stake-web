@@ -106,7 +106,7 @@ export const DelegatedOperator = () => {
 
 export  function StakedInfo() {
   return (
-    <div className=" grid grid-cols-2 gap-6 my-6">
+    <div className=" grid grid-cols-1 sm:grid-cols-2 gap-6 my-6">
       <div>
         <StakedAssets />
       </div>
