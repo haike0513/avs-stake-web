@@ -2,6 +2,9 @@
 import { FC, useState } from "react";
 import { Button } from "../ui/button";
 import { SelectOperatorDialog } from "./SelectOperatorDialog";
+import { UnStakeDialog } from "./dialog/UnStakeDialog";
+import { WithdrawDialog } from "./dialog/WithdrawDialog";
+import { UnDelegateDialog } from "./dialog/UnDelegateDialog";
 
 export interface StakedTokenProps {
   name?: string;
@@ -25,6 +28,9 @@ export const StakedToken: FC<StakedTokenProps> = ({
 }
 
 export const StakedAssets = () => {
+  const [unStakeDialog, setUnStakeDialog] = useState(false);
+  const [withdrawDialog, setWithdrawDialog] = useState(false);
+
   return <div className=" border rounded-md p-4 h-96 bg-gray-100 flex flex-col justify-between">
     <div className=" font-bold text-xl">My Staked Assets</div>
     <div className=" flex flex-col justify-between flex-grow">
@@ -48,8 +54,19 @@ export const StakedAssets = () => {
 
     </div>
     <div className=" w-full grid grid-cols-2 gap-6">
-      <Button className="place-self-center w-full" variant={"outline"}>UnStake</Button>
-      <Button className="place-self-center w-full"  variant={"outline"}>Withdraw</Button>
+      <UnStakeDialog open={unStakeDialog} onOpenChange={(open) => {
+          setUnStakeDialog(open);
+      }}/>
+
+      <WithdrawDialog open={withdrawDialog} onOpenChange={(open) => {
+          setWithdrawDialog(open);
+      }}/>
+      <Button className="place-self-center w-full" variant={"outline"} onClick={() => {
+        setUnStakeDialog(true);
+      }}>UnStake</Button>
+      <Button className="place-self-center w-full"  variant={"outline"} onClick={() => {
+        setWithdrawDialog(true);
+      }}>Withdraw</Button>
     </div>
   </div>
 }
@@ -57,11 +74,19 @@ export const StakedAssets = () => {
 export const DelegatedOperator = () => {
   const [showDialog, setShowDialog] = useState(false);
 
+  const [unDelegateDialog, setUnDelegateDialog] = useState(false);
+
+
   return <div className=" border rounded-md p-4 h-96 flex flex-col bg-gray-100">
     <div className=" flex justify-between">
       <div className=" font-bold text-xl">My Delegated Operator</div>
       <div>
-        <Button variant={"outline"}>UnDelegate</Button>
+        <Button variant={"outline"} onClick={() => {
+        setUnDelegateDialog(true);
+      }}>UnDelegate</Button>
+         <UnDelegateDialog open={unDelegateDialog} onOpenChange={(open) => {
+          setUnDelegateDialog(open);
+      }}/>
       </div>
     </div>
     <div className=" flex-grow flex items-center justify-center">

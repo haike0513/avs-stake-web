@@ -3,6 +3,7 @@ import { FC, Suspense, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { ReStakeDialog } from "./ReStakeDialog";
 import { useRetrieveOperators } from "@/data/eigen";
+import { ClaimRewardDialog } from "./dialog/ClaimRewardDialog";
 // import { getEigenAppURL } from "@/data/util";
 // import Image from "next/image";
 
@@ -22,6 +23,8 @@ export const ReStakedAsset: FC<OperatorItem> = ({
 }) => {
 
   const [showDialog, setShowDialog] = useState(false);
+  const [claimDialog, setClaimDialog] = useState(false);
+
   // const baseAppURL = getEigenAppURL();
   return (
     <div className=" grid grid-cols-6 rounded-lg py-4">
@@ -44,10 +47,13 @@ export const ReStakedAsset: FC<OperatorItem> = ({
       
       <div className=" col-span-2 flex items-center justify-end gap-2">
         <Button variant={"outline"} onClick={() => {
-            // setShowDialog(true);
+            setClaimDialog(true);
           }}>
             Claim
         </Button>
+        <ClaimRewardDialog open={claimDialog} onOpenChange={(open) => {
+            setClaimDialog(open);
+          }}/>
         {/* <a href={`${baseAppURL}/operator/${operator}`} target="_blank"> */}
           <Button onClick={() => {
             setShowDialog(true);
