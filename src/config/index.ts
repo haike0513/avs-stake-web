@@ -1,8 +1,8 @@
 // import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { mainnet, holesky } from 'viem/chains';
-import { createConfig } from 'wagmi';
+// import { createConfig } from 'wagmi';
 
-import { connectorsForWallets, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import {
   rainbowWallet,
   // walletConnectWallet,
