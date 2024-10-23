@@ -2,21 +2,27 @@
 import { FC, Suspense, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { ReStakeDialog } from "./ReStakeDialog";
-import { useRetrieveOperators } from "@/data/eigen";
+// import { useRetrieveOperators } from "@/data/eigen";
 import { ClaimRewardDialog } from "./dialog/ClaimRewardDialog";
 // import { getEigenAppURL } from "@/data/util";
 // import Image from "next/image";
+import { assets } from '@/config/token';
+import { useTokensInfo } from "@/hooks/useTokenInfo";
+import { useAccount } from "wagmi";
+import { formatUnits } from "viem";
 
 interface OperatorItem {
   name: string;
   tvl: string;
   logo?: string;
+  balance?: string;
   totalStakers?: string;
   operator?: string;
 }
 export const ReStakedAsset: FC<OperatorItem> = ({
   name,
   // tvl,
+  balance,
   logo,
   totalStakers,
   // operator,
@@ -37,7 +43,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
           </div>
         </div>
         <div className="flex justify-end items-center">
-          <div>{totalStakers}</div>
+          <div>{balance}</div>
         </div>
         <div className="flex justify-end items-center">
           <div>{totalStakers}</div>
@@ -91,12 +97,12 @@ export  function ReStakedAssetsList() {
 
 
 export  function ReStakedAssetsPages() {
-
-  const [result] = useRetrieveOperators({page: 1});
-
-  const list = useMemo(() => {
-    return result?.data as any[];
-  }, [result?.data]);
+  const account = useAccount();
+  const { balances } = useTokensInfo(assets, account.address as string, account?.chainId as number );
+  const tokens = useMemo(() => {
+    return balances
+  }, [balances]);
+  console.log(tokens);
   return (
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
@@ -109,13 +115,14 @@ export  function ReStakedAssetsPages() {
         <div className="col-span-6 sm:col-span-2"></div>
       </div>
       <div className=" flex flex-col gap-2">
-        {list.map((item) => {
+        {tokens.map((item) => {
           return <ReStakedAsset key={item?.address} 
-            name={item.metadataName}
-            tvl={item.tvl.tvl}
-            logo={item.metadataLogo}
-            totalStakers={item.totalStakers}
-            operator={item.address}
+          balance={formatUnits(item.balance as bigint, item.decimal)}
+            name={item.name}
+            tvl={item.name}
+            logo={item.logoUrl}
+            totalStakers={"0"}
+            operator={item.name}
           />
         })}
       </div>

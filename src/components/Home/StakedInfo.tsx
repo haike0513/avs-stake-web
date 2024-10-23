@@ -89,16 +89,21 @@ export const DelegatedOperator = () => {
       }}/>
       </div>
     </div>
-    <div className=" flex-grow flex items-center justify-center">
+    <div className=" flex-grow flex flex-col items-center justify-center">
+      <div>
+        {'You are not delegated a operator, Please delegated first'}
+      </div>
+      <div className=" my-4">
+        <Button onClick={() => {
+          setShowDialog(true);
+        }}>
+          Select Operator
+        </Button>
+        <SelectOperatorDialog open={showDialog} onOpenChange={(open) => {
+            setShowDialog(open);
+        }}/>
+      </div>
 
-      <Button onClick={() => {
-        setShowDialog(true);
-      }}>
-        Select Operator
-      </Button>
-      <SelectOperatorDialog open={showDialog} onOpenChange={(open) => {
-          setShowDialog(open);
-      }}/>
     </div>
 
   </div>
