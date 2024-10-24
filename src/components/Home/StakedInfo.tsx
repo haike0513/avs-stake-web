@@ -1,10 +1,13 @@
 'use client'
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { SelectOperatorDialog } from "./SelectOperatorDialog";
 import { UnStakeDialog } from "./dialog/UnStakeDialog";
 import { WithdrawDialog } from "./dialog/WithdrawDialog";
 import { UnDelegateDialog } from "./dialog/UnDelegateDialog";
+import { useRetrieveStaker } from "@/data/eigen";
+import { useAccount } from "wagmi";
+import { AssetMap } from "@/config/token";
 
 export interface StakedTokenProps {
   name?: string;
@@ -31,16 +34,27 @@ export const StakedAssets = () => {
   const [unStakeDialog, setUnStakeDialog] = useState(false);
   const [withdrawDialog, setWithdrawDialog] = useState(false);
 
+  const account = useAccount();
+
+  const {data} = useRetrieveStaker({
+    address: account.address
+  });
+  const tvlStrategies = useMemo(() => {
+    return Object.entries((data as any)?.tvl?.tvlStrategies || {});
+  }, [data])
+
   return <div className=" border rounded-md p-4 h-96 bg-gray-100 flex flex-col justify-between">
     <div className=" font-bold text-xl">My Staked Assets</div>
     <div className=" flex flex-col justify-between flex-grow">
       <div className=" flex flex-col gap-2 my-8">
-        <StakedToken icon="https://s2.coinmarketcap.com/static/img/coins/64x64/1.png" name="BTC" 
-        amount="100"
-        />
-        <StakedToken icon="https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" name="ETH" 
-        amount="100"
-        />
+        {tvlStrategies.map((tvl) => {
+          return <StakedToken 
+          key={tvl[0]} 
+          icon={AssetMap[tvl[0]]?.logoUrl}
+          name={tvl[0]} 
+          amount={`${tvl[1] || 0}`}
+          />
+        })}
       </div>
 
       <div>        
@@ -76,6 +90,17 @@ export const DelegatedOperator = () => {
 
   const [unDelegateDialog, setUnDelegateDialog] = useState(false);
 
+  const account = useAccount();
+
+  const { data } = useRetrieveStaker({
+    address: account.address
+  });
+  const operatorAddress = useMemo(() => {
+    return ((data as any)?.operatorAddress);
+  }, [data]);
+
+  console.log(operatorAddress);
+
 
   return <div className=" border rounded-md p-4 h-96 flex flex-col bg-gray-100">
     <div className=" flex justify-between">
@@ -90,6 +115,9 @@ export const DelegatedOperator = () => {
       </div>
     </div>
     <div className=" flex-grow flex flex-col items-center justify-center">
+      {operatorAddress ? <div>
+        {operatorAddress}
+      </div> : <div className="flex-grow flex flex-col items-center justify-center">
       <div>
         {'You are not delegated a operator, Please delegated first'}
       </div>
@@ -103,6 +131,7 @@ export const DelegatedOperator = () => {
             setShowDialog(open);
         }}/>
       </div>
+      </div> }
 
     </div>
 

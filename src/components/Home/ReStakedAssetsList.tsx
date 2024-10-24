@@ -10,12 +10,16 @@ import { Asset, assets } from '@/config/token';
 import { useTokensInfo } from "@/hooks/useTokenInfo";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
+import { useRetrieveStaker } from "@/data/eigen";
+
+import {BigNumber} from 'bignumber.js';
 
 interface OperatorItem {
   name: string;
   tvl: string;
   logo?: string;
   balance?: string;
+  reStakedBalance?: string;
   totalStakers?: string;
   operator?: string;
   asset?: Asset;
@@ -24,6 +28,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
   asset,
   name,
   // tvl,
+  reStakedBalance,
   balance,
   logo,
   totalStakers,
@@ -45,13 +50,13 @@ export const ReStakedAsset: FC<OperatorItem> = ({
           </div>
         </div>
         <div className="flex justify-end items-center">
-          <div>{balance}</div>
+          <div>{new BigNumber(balance || 0).toFormat(4)}</div>
         </div>
         <div className="flex justify-end items-center">
           <div>{totalStakers}</div>
         </div>
         <div className="flex justify-end items-center">
-          <div>{totalStakers}</div>
+          <div>{new BigNumber(reStakedBalance || 0).toFormat(4)}</div>
         </div>
       </div>
       
@@ -104,7 +109,12 @@ export  function ReStakedAssetsPages() {
   const tokens = useMemo(() => {
     return balances
   }, [balances]);
-  console.log(tokens);
+  const {data} = useRetrieveStaker({
+    address: account.address
+  });
+  const tvlStrategies = useMemo(() => {
+    return ((data as any)?.tvl?.tvlStrategies || {});
+  }, [data])
   return (
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
@@ -120,6 +130,7 @@ export  function ReStakedAssetsPages() {
         {tokens.map((item) => {
           return <ReStakedAsset key={item?.address} 
           asset={item}
+          reStakedBalance={tvlStrategies[item.symbol]}
           balance={formatUnits(item.balance as bigint, item.decimals)}
             name={item.name}
             tvl={item.name}

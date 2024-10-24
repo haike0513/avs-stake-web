@@ -20,3 +20,24 @@ export function useRetrieveOperators(props: { page: number }) {
 
   return [query.data as any, query] as const
 }
+
+
+
+export const retrieveStaker = async (address?: string) => {
+  if(!address) return {};
+  const options = {method: 'GET'};
+  const baseURL = getEigenAPIURL();
+  return fetch(`${baseURL}/stakers/${address}?withTvl=true`, options)
+  .then(response => response.json())
+}
+export function useRetrieveStaker(props: { address?: string }) {
+  const query = useSuspenseQuery({
+    queryKey: ['retrieveStaker', props.address],
+    queryFn: async () => {
+      const res: unknown = await retrieveStaker(props?.address)
+      return res
+    },
+  })
+
+  return query
+}

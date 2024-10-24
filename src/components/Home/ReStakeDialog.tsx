@@ -90,6 +90,15 @@ export const ReStakeDialog = React.forwardRef<
           {formatUnits(asset?.balance as bigint, asset?.decimals || 1)}
         </div>
 
+        <div>
+
+          <div className=" flex items-center justify-between">
+            <div>Token Address</div>
+            <div className=" w-32 truncate">{asset?.address}</div>
+
+          </div>
+        </div>
+
         <div className="flex items-center justify-center w-full">
           <Button
             className=" w-full"
