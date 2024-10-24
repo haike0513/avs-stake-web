@@ -2,18 +2,19 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
-import React, { FC, useCallback, useState } from "react";
+import React, { FC, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
-import { useWriteContract } from "wagmi";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { Asset } from "@/config/token";
 import { LayersIcon } from "@radix-ui/react-icons";
 import { Input } from "../ui/input";
-import { formatUnits, parseUnits } from "viem";
+import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { DialogProps, DialogTitle } from "@radix-ui/react-dialog";
 import StrategyManagerABI from '@/abi/StrategyManager.abi.json';
 import { strategyManagerAddress } from "@/config/contracts";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Form, FormField } from "../ui/form";
+import BigNumber from "bignumber.js";
 
 export interface ReStakeProps {
   asset?: Asset,
@@ -24,9 +25,30 @@ export const ReStakeDialog = React.forwardRef<
   React.ComponentPropsWithoutRef<FC<ReStakeProps & DialogProps>>
 >(({ asset, ...props }, ref) => {
   const form = useForm();
+  const value = useWatch({
+    control: form.control,
+  })
   const { writeContractAsync } = useWriteContract();
 
   const [loading, setLoading] = useState(false);
+  const {address} = useAccount();
+
+  const {data: allowance} = useReadContract({
+    abi: erc20Abi,
+    address: asset?.address as Address,
+    functionName: "allowance",
+    args: [
+      address as Address,
+      strategyManagerAddress,
+    ],
+  });
+
+  const shouldApprove = useMemo(() => {
+    const amount = value?.amount || "0";
+    const unit = parseUnits(amount, asset?.decimals || 1);
+    return new BigNumber(unit.toString()).gte(new BigNumber((allowance || 0).toString()))
+  }, [allowance, asset?.decimals, value?.amount]);
+
 
   const handleWriteContract = useCallback(async () => {
     if(!asset) return;
@@ -45,6 +67,32 @@ export const ReStakeDialog = React.forwardRef<
           asset?.strategyAddress,
           asset?.address,
           parseUnits(amount, asset?.decimals),
+        ],
+      });
+      console.log(txHash);
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  }, [asset, form, writeContractAsync]);
+
+
+  const handleApprove = useCallback(async () => {
+    if(!asset) return;
+    setLoading(true);
+    try {
+      const value = form.getValues();
+      const amount = value.amount;
+
+      console.log(asset);
+      console.log(amount);
+      const txHash = await writeContractAsync({
+        abi: erc20Abi,
+        address: asset.address as Address,
+        functionName: "approve",
+        args: [
+          strategyManagerAddress,
+          parseUnits("1000000000000000", 18),
         ],
       });
       console.log(txHash);
@@ -100,13 +148,19 @@ export const ReStakeDialog = React.forwardRef<
         </div>
 
         <div className="flex items-center justify-center w-full">
-          <Button
+          {shouldApprove ?<Button
             className=" w-full"
             disabled={loading}
             onClick={() => {
-              handleWriteContract();
+              handleApprove();
             }}
-          >ReStake {asset?.name}</Button>
+          >Approve {asset?.name}</Button> : <Button
+          className=" w-full"
+          disabled={loading}
+          onClick={() => {
+            handleWriteContract();
+          }}
+        >ReStake {asset?.name}</Button>}
         </div>
       </DialogContent>
     </Dialog>
