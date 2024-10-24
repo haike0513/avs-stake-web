@@ -10,7 +10,10 @@ import { LayersIcon } from "@radix-ui/react-icons";
 import { Input } from "../ui/input";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { DialogProps, DialogTitle } from "@radix-ui/react-dialog";
-import StrategyManagerABI from '@/abi/StrategyManager.abi.json';
+// import StrategyManagerABI from '@/abi/StrategyManager.abi.json';
+import { ABI as StrategyManagerABI} from '@/abi/StrategyManager';
+import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
+
 import { strategyManagerAddress } from "@/config/contracts";
 import { useForm, useWatch } from "react-hook-form";
 import { Form, FormField } from "../ui/form";
@@ -18,12 +21,13 @@ import BigNumber from "bignumber.js";
 
 export interface ReStakeProps {
   asset?: Asset,
+  operator?: string,
 }
 
 export const ReStakeDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
   React.ComponentPropsWithoutRef<FC<ReStakeProps & DialogProps>>
->(({ asset, ...props }, ref) => {
+>(({ asset, operator, ...props }, ref) => {
   const form = useForm();
   const value = useWatch({
     control: form.control,
@@ -64,8 +68,8 @@ export const ReStakeDialog = React.forwardRef<
         address: strategyManagerAddress,
         functionName: "depositIntoStrategy",
         args: [
-          asset?.strategyAddress,
-          asset?.address,
+          asset?.strategyAddress as Address,
+          asset?.address as Address,
           parseUnits(amount, asset?.decimals),
         ],
       });
@@ -75,6 +79,38 @@ export const ReStakeDialog = React.forwardRef<
     }
     setLoading(false);
   }, [asset, form, writeContractAsync]);
+
+
+
+  const handleDelegateToOperator = useCallback(async () => {
+    if(!asset) return;
+    setLoading(true);
+    try {
+      const value = form.getValues();
+      const amount = value.amount;
+
+      console.log(asset);
+      console.log(amount);
+      const txHash = await writeContractAsync({
+        abi: DelegationManagerABI,
+        address: strategyManagerAddress,
+        functionName: "delegateTo",
+        args: [
+          operator as Address,
+          {
+            signature: "0x",
+            expiry: BigInt(0),
+          },
+          "0x",
+        ],
+      });
+      console.log(txHash);
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  }, [asset, form, operator, writeContractAsync]);
+
 
 
   const handleApprove = useCallback(async () => {
@@ -158,7 +194,12 @@ export const ReStakeDialog = React.forwardRef<
           className=" w-full"
           disabled={loading}
           onClick={() => {
-            handleWriteContract();
+            if(true) {
+              handleWriteContract();
+            } else {
+              handleDelegateToOperator();
+            }
+
           }}
         >ReStake {asset?.name}</Button>}
         </div>
