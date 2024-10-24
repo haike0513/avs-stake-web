@@ -6,7 +6,7 @@ import { ReStakeDialog } from "./ReStakeDialog";
 import { ClaimRewardDialog } from "./dialog/ClaimRewardDialog";
 // import { getEigenAppURL } from "@/data/util";
 // import Image from "next/image";
-import { assets } from '@/config/token';
+import { Asset, assets } from '@/config/token';
 import { useTokensInfo } from "@/hooks/useTokenInfo";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
@@ -18,8 +18,10 @@ interface OperatorItem {
   balance?: string;
   totalStakers?: string;
   operator?: string;
+  asset?: Asset;
 }
 export const ReStakedAsset: FC<OperatorItem> = ({
+  asset,
   name,
   // tvl,
   balance,
@@ -68,9 +70,9 @@ export const ReStakedAsset: FC<OperatorItem> = ({
           }}>
             ReStake Now
           </Button>
-          <ReStakeDialog open={showDialog} onOpenChange={(open) => {
+          <ReStakeDialog asset={asset} open={showDialog} onOpenChange={(open) => {
             setShowDialog(open);
-          }}/>
+          }} />
         {/* </a> */}
       </div>
 
@@ -117,7 +119,8 @@ export  function ReStakedAssetsPages() {
       <div className=" flex flex-col gap-2">
         {tokens.map((item) => {
           return <ReStakedAsset key={item?.address} 
-          balance={formatUnits(item.balance as bigint, item.decimal)}
+          asset={item}
+          balance={formatUnits(item.balance as bigint, item.decimals)}
             name={item.name}
             tvl={item.name}
             logo={item.logoUrl}
