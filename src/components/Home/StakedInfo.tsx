@@ -1,13 +1,17 @@
 'use client'
-import { FC, useMemo, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { SelectOperatorDialog } from "./SelectOperatorDialog";
 import { UnStakeDialog } from "./dialog/UnStakeDialog";
 import { WithdrawDialog } from "./dialog/WithdrawDialog";
 import { UnDelegateDialog } from "./dialog/UnDelegateDialog";
-import { useRetrieveStaker } from "@/data/eigen";
-import { useAccount } from "wagmi";
+import { useRetrieveStaker, useRetrieveQueuedWithdrawals, useRetrieveOperator } from "@/data/eigen";
+import { useAccount, useWriteContract } from "wagmi";
+import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
+
 import { AssetMap } from "@/config/token";
+import { delegationManagerAddress } from "@/config/contracts";
+import { Address } from "viem";
 
 export interface StakedTokenProps {
   name?: string;
@@ -27,6 +31,51 @@ export const StakedToken: FC<StakedTokenProps> = ({
       <span>{name}</span>
     </div>
     <div>{amount}</div>
+  </div>
+}
+
+export const QueuedWithdrawalsAsset = () => {
+  const account = useAccount();
+
+  const {data} = useRetrieveQueuedWithdrawals({
+    address: account.address
+  });
+
+  console.log("QueuedWithdrawalsAsset", data);
+
+  return <div>
+    <div className=" flex flex-col justify-between flex-grow">
+
+      <div>        
+        <div className=" bg-white rounded-sm h-12 my-2 flex items-center px-4 text-sm text-gray-400">
+          <div>In Escrow</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
+
+
+export const AvailableWithdrawalsAsset = () => {
+  const account = useAccount();
+
+  const {data} = useRetrieveQueuedWithdrawals({
+    address: account.address
+  });
+
+  console.log("QueuedWithdrawalsAsset", data);
+
+  return <div>
+    <div className=" flex flex-col justify-between flex-grow">
+
+      <div>        
+        <div className=" bg-white rounded-sm h-12 my-2 flex items-center px-4 text-sm text-gray-400">
+          <div>Available to withdraw</div>
+        </div>
+      </div>
+
+    </div>
   </div>
 }
 
@@ -58,12 +107,8 @@ export const StakedAssets = () => {
       </div>
 
       <div>        
-        <div className=" bg-white rounded-sm h-12 my-2 flex items-center px-4 text-sm text-gray-400">
-          <div>In Escrow</div>
-        </div>
-        <div className=" bg-white rounded-sm h-12 my-2 flex items-center px-4 text-sm text-gray-400">
-          <div>Available to withdraw</div>
-        </div>
+        <QueuedWithdrawalsAsset />
+        <AvailableWithdrawalsAsset />
       </div>
 
     </div>
@@ -90,6 +135,31 @@ export const DelegatedOperator = () => {
 
   const [unDelegateDialog, setUnDelegateDialog] = useState(false);
 
+  const { writeContractAsync } = useWriteContract();
+
+  const [, setLoading] = useState(false);
+
+  const { address } = useAccount();
+
+
+
+  const handleUnDelegate = useCallback(async () => {
+    setLoading(true);
+    try {
+      await writeContractAsync({
+        abi: DelegationManagerABI,
+        address: delegationManagerAddress,
+        functionName: "undelegate",
+        args: [
+          address as Address,
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  }, [address, writeContractAsync]);
+
   const account = useAccount();
 
   const { data } = useRetrieveStaker({
@@ -99,24 +169,41 @@ export const DelegatedOperator = () => {
     return ((data as any)?.operatorAddress);
   }, [data]);
 
-  console.log(operatorAddress);
 
+  const operatorData = useRetrieveOperator({
+    address: operatorAddress,
+  });
+
+  const operator = useMemo(() => {
+    return operatorData?.data as any;
+  }, [operatorData?.data])
 
   return <div className=" border rounded-md p-4 h-96 flex flex-col bg-gray-100">
     <div className=" flex justify-between">
       <div className=" font-bold text-xl">My Delegated Operator</div>
-      <div>
+      { operatorAddress && <div>
         <Button variant={"outline"} onClick={() => {
-        setUnDelegateDialog(true);
+        // setUnDelegateDialog(true);
+        handleUnDelegate();
       }}>UnDelegate</Button>
          <UnDelegateDialog open={unDelegateDialog} onOpenChange={(open) => {
           setUnDelegateDialog(open);
       }}/>
-      </div>
+      </div>}
     </div>
     <div className=" flex-grow flex flex-col items-center justify-center">
-      {operatorAddress ? <div>
-        {operatorAddress}
+      {operatorAddress ? <div className=" h-full">
+          <div>
+          <div className=" flex items-center gap-4">
+            <div>
+              <img className="h-10 w-10 rounded-md" src={operator?.metadataLogo} />
+            </div>
+            <div>{operator?.metadataName}</div>
+          </div>
+
+          <div>{operator?.address}</div>
+          <div>{operator?.metadataDescription}</div>
+        </div>
       </div> : <div className="flex-grow flex flex-col items-center justify-center">
       <div>
         {'You are not delegated a operator, Please delegated first'}

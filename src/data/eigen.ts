@@ -41,3 +41,48 @@ export function useRetrieveStaker(props: { address?: string }) {
 
   return query
 }
+
+export const retrieveOperator = async (address?: string) => {
+  if(!address) return {};
+  const options = {method: 'GET'};
+  const baseURL = getEigenAPIURL();
+  // https://api.eigenexplorer.com/operators/{address}
+  return fetch(`${baseURL}/operators/${address}?withTvl=true`, options)
+  .then(response => response.json())
+}
+export function useRetrieveOperator(props: { address?: string }) {
+  const query = useSuspenseQuery({
+    queryKey: ['retrieveOperator', props.address],
+    queryFn: async () => {
+      const res: unknown = await retrieveOperator(props?.address)
+      return res
+    },
+  })
+
+  return query
+}
+
+
+
+export const retrieveQueuedWithdrawals = async (address?: string) => {
+  if(!address) return {};
+  const options = {method: 'GET'};
+  const baseURL = getEigenAPIURL();
+  // https://api.eigenexplorer.com/stakers/{address}/withdrawals/queued_withdrawable
+
+  return fetch(`${baseURL}/stakers/${address}/withdrawals/queued_withdrawable`, options)
+  .then(response => response.json());
+  // return fetch(`${baseURL}/stakers/${address}/withdrawals/queued`, options)
+  // .then(response => response.json())
+}
+export function useRetrieveQueuedWithdrawals(props: { address?: string }) {
+  const query = useSuspenseQuery({
+    queryKey: ['retrieveQueuedWithdrawals', props.address],
+    queryFn: async () => {
+      const res: unknown = await retrieveQueuedWithdrawals(props?.address)
+      return res
+    },
+  })
+
+  return query
+}
