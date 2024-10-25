@@ -3,14 +3,17 @@ import {
   DialogContent,
 } from "@/components/ui/dialog"
 import { useRetrieveStaker } from "@/data/eigen";
-import React, { useMemo } from "react";
-import { useAccount } from "wagmi";
+import React, { useCallback, useMemo, useState } from "react";
+import { useAccount, useWriteContract } from "wagmi";
 import { StakedToken } from "../StakedInfo";
 import { AssetMap } from "@/config/token";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
+import { delegationManagerAddress } from "@/config/contracts";
+// import { Address } from "viem";
 
 export const WithdrawDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
@@ -33,6 +36,29 @@ export const WithdrawDialog = React.forwardRef<
   const tvlStrategies = useMemo(() => {
     return Object.entries((data as any)?.tvl?.tvlStrategies || {});
   }, [data])
+
+  const { writeContractAsync } = useWriteContract();
+  const [, setLoading] = useState(false);
+
+  const handleWithdraw = useCallback(async () => {
+    setLoading(true);
+    try {
+      await writeContractAsync({
+        abi: DelegationManagerABI,
+        address: delegationManagerAddress,
+        functionName: "completeQueuedWithdrawals",
+        args: [
+          [],
+          [[]],
+          [],
+          []
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  }, [writeContractAsync]);
   
   
   
@@ -81,7 +107,11 @@ export const WithdrawDialog = React.forwardRef<
               })}
             </div>
             <div className=" w-full">
-            <Button className=" w-full">Withdraw</Button>
+            <Button className=" w-full"
+              onClick={() => {
+                handleWithdraw();
+              }}
+            >Withdraw</Button>
           </div>
         </div>
         }}

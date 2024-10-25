@@ -10,6 +10,7 @@ import { useWriteContract } from "wagmi";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { Address } from "viem";
+import { DialogProps } from "@radix-ui/react-dialog";
 
 interface OperatorItemProps {
   name: string;
@@ -26,7 +27,7 @@ export const OperatorItem: FC<OperatorItemProps> = ({
   handleDelegate,
 }) => {
   return <div className="">
-    <div className="grid grid-cols-3">
+    <div className="grid grid-cols-3 items-center">
       <img className=" rounded-md" src={logo || ''}  width={40} height={40}/>
       <div>{name}</div>
       <div><Button variant={"secondary"}
@@ -38,8 +39,8 @@ export const OperatorItem: FC<OperatorItemProps> = ({
 
 export const SelectOperatorDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
-  React.ComponentPropsWithoutRef<typeof Dialog>
->(({  ...props }, ref) => {
+  React.ComponentPropsWithoutRef<FC<{onSelect?: (operator?: string) =>void} & DialogProps>>
+>(({ onSelect, ...props }, ref) => {
 
   const [result] = useRetrieveOperators({page: 1});
 
@@ -86,17 +87,24 @@ export const SelectOperatorDialog = React.forwardRef<
         <div>Select Operator</div>
         <div className="flex flex-col gap-4 max-h-96 overflow-y-scroll">
           {list.map((operator) => {
-            return <OperatorItem  key={operator?.address} 
-            name={operator.metadataName}
-            tvl={operator.tvl.tvl}
-            logo={operator.metadataLogo}
-            totalStakers={operator.totalStakers}
-            operator={operator.address}
-            
-            handleDelegate={() => {
-              handleUnDelegate(operator.address)
-            }}
-            />
+            return <div onClick={() => {
+              onSelect?.(operator?.address);
+              props?.onOpenChange?.(false);
+            }}  key={operator?.address} 
+             className=" hover:bg-gray-400 cursor-pointer p-2 rounded-md"
+            >
+            <OperatorItem 
+              name={operator.metadataName}
+              tvl={operator.tvl.tvl}
+              logo={operator.metadataLogo}
+              totalStakers={operator.totalStakers}
+              operator={operator.address}
+              
+              handleDelegate={() => {
+                handleUnDelegate(operator.address)
+              }}
+              />
+            </div>
           })}
         </div>
       </DialogContent>

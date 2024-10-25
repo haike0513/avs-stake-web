@@ -6,7 +6,7 @@ import React, { FC, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { Asset } from "@/config/token";
-import { LayersIcon } from "@radix-ui/react-icons";
+import { ArrowRightIcon, LayersIcon } from "@radix-ui/react-icons";
 import { Input } from "../ui/input";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { DialogProps, DialogTitle } from "@radix-ui/react-dialog";
@@ -18,6 +18,7 @@ import { strategyManagerAddress } from "@/config/contracts";
 import { useForm, useWatch } from "react-hook-form";
 import { Form, FormField } from "../ui/form";
 import BigNumber from "bignumber.js";
+import { SelectOperatorDialog } from "./SelectOperatorDialog";
 
 export interface ReStakeProps {
   asset?: Asset,
@@ -138,6 +139,13 @@ export const ReStakeDialog = React.forwardRef<
     setLoading(false);
   }, [asset, form, writeContractAsync]);
 
+  const [operatorDialog, setOperatorDialog] = useState(false);
+
+  const [selectOperator, setSelectOperator] = useState<string>();
+
+  const finalOperator = useMemo(() => {
+    return operator || selectOperator;
+  }, [operator, selectOperator])
 
   
   return (
@@ -174,12 +182,19 @@ export const ReStakeDialog = React.forwardRef<
           {formatUnits(asset?.balance as bigint, asset?.decimals || 1)}
         </div>
 
-        <div>
-
+        <div className=" flex flex-col gap-4">
           <div className=" flex items-center justify-between">
             <div>Token Address</div>
             <div className=" w-32 truncate">{asset?.address}</div>
 
+          </div>
+          <div className=" flex items-center justify-between">
+            <div>Delegated to</div>
+            <div>{finalOperator ? <div className=" w-32 truncate">{finalOperator}</div>: <div className="flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              setOperatorDialog(true);
+            }}
+            >Select Operator <div><ArrowRightIcon className="h-4 w-4" /></div></div>}</div>
           </div>
         </div>
 
@@ -204,6 +219,15 @@ export const ReStakeDialog = React.forwardRef<
         >ReStake {asset?.name}</Button>}
         </div>
       </DialogContent>
+      <SelectOperatorDialog
+        open={operatorDialog}
+        onOpenChange={(open) => {
+            setOperatorDialog(open);
+        }}
+        onSelect={(operator?: string) => {
+          setSelectOperator(operator);
+        }}
+       />
     </Dialog>
   )
 });

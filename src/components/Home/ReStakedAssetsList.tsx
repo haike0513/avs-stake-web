@@ -32,7 +32,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
   balance,
   logo,
   totalStakers,
-  // operator,
+  operator,
 }) => {
 
   const [showDialog, setShowDialog] = useState(false);
@@ -77,7 +77,9 @@ export const ReStakedAsset: FC<OperatorItem> = ({
           </Button>
           <ReStakeDialog asset={asset} open={showDialog} onOpenChange={(open) => {
             setShowDialog(open);
-          }} />
+          }} 
+          operator={operator}
+          />
         {/* </a> */}
       </div>
 
@@ -114,6 +116,9 @@ export  function ReStakedAssetsPages() {
   });
   const tvlStrategies = useMemo(() => {
     return ((data as any)?.tvl?.tvlStrategies || {});
+  }, [data]);
+  const operator = useMemo(() => {
+    return ((data as any)?.operatorAddress)
   }, [data])
   return (
     <div className="flex flex-col gap-2">
@@ -136,7 +141,7 @@ export  function ReStakedAssetsPages() {
             tvl={item.name}
             logo={item.logoUrl}
             totalStakers={"0"}
-            operator={item.name}
+            operator={operator}
           />
         })}
       </div>

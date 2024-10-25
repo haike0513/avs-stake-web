@@ -4,14 +4,16 @@ import {
 } from "@/components/ui/dialog"
 import { AssetMap } from "@/config/token";
 import { useRetrieveStaker } from "@/data/eigen";
-import React, { useMemo, useState } from "react";
-import { useAccount } from "wagmi";
+import React, { useCallback, useMemo, useState } from "react";
+import { useAccount, useWriteContract } from "wagmi";
 import { StakedToken } from "../StakedInfo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormField } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
+import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
+import { delegationManagerAddress } from "@/config/contracts";
 
 export const UnStakeDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
@@ -21,6 +23,27 @@ export const UnStakeDialog = React.forwardRef<
   const form = useForm();
   
   const account = useAccount();
+
+  const { writeContractAsync } = useWriteContract();
+  const [, setLoading] = useState(false);
+
+  const handleUnStake = useCallback(async () => {
+    setLoading(true);
+    try {
+      await writeContractAsync({
+        abi: DelegationManagerABI,
+        address: delegationManagerAddress,
+        functionName: "queueWithdrawals",
+        args: [
+          []
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  }, [writeContractAsync]);
+
 
   const {data} = useRetrieveStaker({
     address: account.address
@@ -82,7 +105,11 @@ export const UnStakeDialog = React.forwardRef<
             </div>
             {/* <div className=" w-20"></div> */}
           </div>
-          <Button className=" w-full">UnStake</Button>
+          <Button className=" w-full"
+            onClick={() => {
+              handleUnStake();
+            }}
+          >UnStake</Button>
         </div>
       </div>
     </DialogContent>

@@ -117,9 +117,12 @@ export const StakedAssets = () => {
           setUnStakeDialog(open);
       }}/>
 
-      <WithdrawDialog open={withdrawDialog} onOpenChange={(open) => {
-          setWithdrawDialog(open);
-      }}/>
+      <WithdrawDialog 
+        open={withdrawDialog}
+        onOpenChange={(open) => {
+            setWithdrawDialog(open);
+        }}
+      />
       <Button className="place-self-center w-full" variant={"outline"} onClick={() => {
         setUnStakeDialog(true);
       }}>UnStake</Button>
