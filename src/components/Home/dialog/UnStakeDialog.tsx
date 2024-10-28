@@ -3,7 +3,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog"
 import React, { useCallback, useMemo, useState } from "react";
-import { useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { StakedToken } from "../StakedInfo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { useStakedBalance } from "@/hooks/useStakedBalance";
-import { formatUnits } from "viem";
+import { Address, formatUnits, parseUnits } from "viem";
 
 export const UnStakeDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
@@ -26,23 +26,6 @@ export const UnStakeDialog = React.forwardRef<
   const { writeContractAsync } = useWriteContract();
   const [, setLoading] = useState(false);
 
-  const handleUnStake = useCallback(async () => {
-    setLoading(true);
-    try {
-      await writeContractAsync({
-        abi: DelegationManagerABI,
-        address: delegationManagerAddress,
-        functionName: "queueWithdrawals",
-        args: [
-          []
-        ],
-      });
-    } catch (error) {
-      console.log(error);
-    }
-    setLoading(false);
-  }, [writeContractAsync]);
-
 
   const [checkedToken, setCheckedToken] = useState<string>();
 
@@ -51,7 +34,38 @@ export const UnStakeDialog = React.forwardRef<
 
   const checkedStaked = useMemo(() => {
     return stakedBalance.find((st) => st.token?.address === checkedToken);
-  }, [checkedToken, stakedBalance])
+  }, [checkedToken, stakedBalance]);
+
+  const {address} = useAccount();
+
+  const handleUnStake = useCallback(async () => {
+    setLoading(true);
+    try {
+      const value = form.getValues();
+      const amount = value.amount;
+      if(!checkedStaked || !amount || !address) return;
+      const share = parseUnits(amount, checkedStaked?.token?.decimals || 0);
+      const strategyAddress = [checkedStaked.token?.strategyAddress as Address];
+      const shares = [share];
+      await writeContractAsync({
+        abi: DelegationManagerABI,
+        address: delegationManagerAddress,
+        functionName: "queueWithdrawals",
+        args: [
+          [
+            {
+              strategies: strategyAddress,
+              shares,
+              withdrawer: address,
+            }
+          ]
+        ],
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
+  }, [address, checkedStaked, form, writeContractAsync]);
   
   return(
   <Dialog
