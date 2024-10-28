@@ -8,12 +8,15 @@ import { ClaimRewardDialog } from "./dialog/ClaimRewardDialog";
 // import Image from "next/image";
 import { Asset, assets } from '@/config/token';
 import { useTokensInfo } from "@/hooks/useTokenInfo";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
-import { useRetrieveStaker } from "@/data/eigen";
 
 import {BigNumber} from 'bignumber.js';
 import { useStakedBalance } from "@/hooks/useStakedBalance";
+import { SelectOperatorDialog } from "./SelectOperatorDialog";
+import { delegationManagerAddress } from "@/config/contracts";
+import { Address } from "viem";
+import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 
 interface OperatorItem {
   name: string;
@@ -38,6 +41,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
 
   const [showDialog, setShowDialog] = useState(false);
   const [claimDialog, setClaimDialog] = useState(false);
+  const [operatorDialog, setOperatorDialog] = useState(false);
 
   // const baseAppURL = getEigenAppURL();
   return (
@@ -63,24 +67,33 @@ export const ReStakedAsset: FC<OperatorItem> = ({
       
       <div className="col-span-6 sm:col-span-2 flex items-center justify-center sm:justify-end gap-6 sm:gap-2 my-2 sm:my-0">
         <Button variant={"outline"} onClick={() => {
-            setClaimDialog(true);
+            // setClaimDialog(true);
           }}>
-            Claim
+            <a className=" w-full h-full">
+              Claim
+            </a>
         </Button>
         <ClaimRewardDialog open={claimDialog} onOpenChange={(open) => {
             setClaimDialog(open);
           }}/>
         {/* <a href={`${baseAppURL}/operator/${operator}`} target="_blank"> */}
           <Button onClick={() => {
-            setShowDialog(true);
+            if(!operator) {
+              setOperatorDialog(true);
+            } else {
+              setShowDialog(true);
+            }
           }}>
-            ReStake Now
+            Restake Now
           </Button>
           <ReStakeDialog asset={asset} open={showDialog} onOpenChange={(open) => {
             setShowDialog(open);
           }} 
           operator={operator}
           />
+          <SelectOperatorDialog open={operatorDialog} onOpenChange={(open) => {
+            setOperatorDialog(open);
+        }}/>
         {/* </a> */}
       </div>
 
@@ -112,13 +125,16 @@ export  function ReStakedAssetsPages() {
   const tokens = useMemo(() => {
     return balances
   }, [balances]);
-  const {data} = useRetrieveStaker({
-    address: account.address
-  });
-  const operator = useMemo(() => {
-    return ((data as any)?.operatorAddress)
-  }, [data])
   const stakedBalanced = useStakedBalance();
+  const {address} = useAccount();
+  const {data: delegatedTo} = useReadContract({
+    abi: DelegationManagerABI,
+    address: delegationManagerAddress,
+    functionName: "delegatedTo",
+    args: [
+      address as Address,
+    ],
+  });
   return (
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
@@ -126,7 +142,7 @@ export  function ReStakedAssetsPages() {
           <div className="flex justify-start items-center font-bold">Assets</div>
           <div className="flex justify-end items-center font-bold">Wallet Balance</div>
           <div className="flex justify-end items-center font-bold">Available to withdraw</div>
-          <div className="flex justify-end items-center font-bold">ReStaked Balance</div>
+          <div className="flex justify-end items-center font-bold">Restaked Balance</div>
         </div>
         <div className="col-span-6 sm:col-span-2"></div>
       </div>
@@ -143,7 +159,7 @@ export  function ReStakedAssetsPages() {
             tvl={item.name}
             logo={item.logoUrl}
             totalStakers={"0"}
-            operator={operator}
+            operator={delegatedTo}
           />
         })}
       </div>
