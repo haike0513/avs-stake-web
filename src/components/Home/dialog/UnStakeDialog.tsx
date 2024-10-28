@@ -2,10 +2,8 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
-import { AssetMap } from "@/config/token";
-import { useRetrieveStaker } from "@/data/eigen";
 import React, { useCallback, useMemo, useState } from "react";
-import { useAccount, useWriteContract } from "wagmi";
+import { useWriteContract } from "wagmi";
 import { StakedToken } from "../StakedInfo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +12,8 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
+import { useStakedBalance } from "@/hooks/useStakedBalance";
+import { formatUnits } from "viem";
 
 export const UnStakeDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
@@ -21,8 +21,7 @@ export const UnStakeDialog = React.forwardRef<
 >(({  ...props }, ref) => {
 
   const form = useForm();
-  
-  const account = useAccount();
+
 
   const { writeContractAsync } = useWriteContract();
   const [, setLoading] = useState(false);
@@ -45,15 +44,14 @@ export const UnStakeDialog = React.forwardRef<
   }, [writeContractAsync]);
 
 
-  const {data} = useRetrieveStaker({
-    address: account.address
-  });
-  const tvlStrategies = useMemo(() => {
-    return Object.entries((data as any)?.tvl?.tvlStrategies || {});
-  }, [data])
+  const [checkedToken, setCheckedToken] = useState<string>();
 
 
-  const [checkedToken, setCheckedToken] = useState("");
+  const stakedBalance = useStakedBalance();
+
+  const checkedStaked = useMemo(() => {
+    return stakedBalance.find((st) => st.token?.address === checkedToken);
+  }, [checkedToken, stakedBalance])
   
   return(
   <Dialog
@@ -64,20 +62,20 @@ export const UnStakeDialog = React.forwardRef<
       <div className="flex flex-col gap-4">
 
       <div className=" flex flex-col gap-2 my-8">
-        {tvlStrategies.map((tvl) => {
-            return <div className=" flex items-center cursor-pointer hover:bg-gray-200 p-2 rounded-sm" key={tvl[0]} 
+        {stakedBalance.map((st) => {
+            return <div className=" flex items-center cursor-pointer hover:bg-gray-200 p-2 rounded-sm" key={st.token?.address} 
               onClick={() => {
-                setCheckedToken(tvl[0])
+                setCheckedToken(st.token?.address)
               }}
             >
-              <Checkbox  checked={checkedToken === tvl[0] }/>
+              <Checkbox  checked={checkedToken === st.token?.address }/>
               <div className=" flex-grow">
 
                 <StakedToken 
-                key={tvl[0]} 
-                icon={AssetMap[tvl[0]]?.logoUrl}
-                name={tvl[0]} 
-                amount={`${tvl[1] || 0}`}
+                key={st.token?.address} 
+                icon={st.token?.logoUrl}
+                name={st.token?.name} 
+                amount={`${formatUnits(st.balance, st.token?.decimals || 0)}`}
                 />
               </div>
             </div>
@@ -85,12 +83,12 @@ export const UnStakeDialog = React.forwardRef<
         </div>
         <div className=" w-full">
           <div>
-            Unstake {checkedToken}
+            Unstake {checkedStaked?.token?.name}
           </div>
           <div className="my-6 flex items-center gap-6">
             <div className="flex items-center justify-center gap-2 w-20">
-              {AssetMap[checkedToken]?.logoUrl && <img className="w-6 h-6 rounded-md" src={AssetMap[checkedToken]?.logoUrl}/>}
-              <div>{checkedToken}</div>
+              {checkedStaked?.token?.logoUrl && <img className="w-6 h-6 rounded-md" src={checkedStaked?.token?.logoUrl}/>}
+              <div>{checkedStaked?.token?.name}</div>
             </div>
             <div className=" flex-grow">
               <Form {...form}>

@@ -13,6 +13,7 @@ import { formatUnits } from "viem";
 import { useRetrieveStaker } from "@/data/eigen";
 
 import {BigNumber} from 'bignumber.js';
+import { useStakedBalance } from "@/hooks/useStakedBalance";
 
 interface OperatorItem {
   name: string;
@@ -96,7 +97,7 @@ export  function ReStakedAssetsList() {
     <div className=" min-h-96">
       <div className=" text-2xl font-bold mt-20 mb-6">Support Restaked Assets</div>
       <div className=" border rounded-md p-6 bg-gray-100">
-        <Suspense fallback={<div>waiting 100....</div>}>
+        <Suspense fallback={<div></div>}>
           <ReStakedAssetsPages />
         </Suspense>
       </div>
@@ -114,12 +115,10 @@ export  function ReStakedAssetsPages() {
   const {data} = useRetrieveStaker({
     address: account.address
   });
-  const tvlStrategies = useMemo(() => {
-    return ((data as any)?.tvl?.tvlStrategies || {});
-  }, [data]);
   const operator = useMemo(() => {
     return ((data as any)?.operatorAddress)
   }, [data])
+  const stakedBalanced = useStakedBalance();
   return (
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
@@ -133,9 +132,12 @@ export  function ReStakedAssetsPages() {
       </div>
       <div className=" flex flex-col gap-2">
         {tokens.map((item) => {
+          const staked = stakedBalanced.find((st) => {
+            return st.token?.address.toLowerCase() === item.address.toLowerCase();
+          })
           return <ReStakedAsset key={item?.address} 
           asset={item}
-          reStakedBalance={tvlStrategies[item.symbol]}
+          reStakedBalance={formatUnits(staked?.balance || BigInt(0), item.decimals)}
           balance={formatUnits(item.balance as bigint, item.decimals)}
             name={item.name}
             tvl={item.name}

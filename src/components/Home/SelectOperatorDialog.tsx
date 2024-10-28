@@ -57,7 +57,7 @@ export const SelectOperatorDialog = React.forwardRef<
 
 
 
-  const handleUnDelegate = useCallback(async (operator: string) => {
+  const handleDelegate = useCallback(async (operator: string) => {
     setLoading(true);
     try {
       await writeContractAsync({
@@ -101,7 +101,7 @@ export const SelectOperatorDialog = React.forwardRef<
               operator={operator.address}
               
               handleDelegate={() => {
-                handleUnDelegate(operator.address)
+                handleDelegate(operator.address)
               }}
               />
             </div>

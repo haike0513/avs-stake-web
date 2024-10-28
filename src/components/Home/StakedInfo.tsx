@@ -6,12 +6,12 @@ import { UnStakeDialog } from "./dialog/UnStakeDialog";
 import { WithdrawDialog } from "./dialog/WithdrawDialog";
 import { UnDelegateDialog } from "./dialog/UnDelegateDialog";
 import { useRetrieveStaker, useRetrieveQueuedWithdrawals, useRetrieveOperator } from "@/data/eigen";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 
-import { AssetMap } from "@/config/token";
 import { delegationManagerAddress } from "@/config/contracts";
-import { Address } from "viem";
+import { Address, formatUnits } from "viem";
+import { useStakedBalance } from "@/hooks/useStakedBalance";
 
 export interface StakedTokenProps {
   name?: string;
@@ -83,25 +83,18 @@ export const StakedAssets = () => {
   const [unStakeDialog, setUnStakeDialog] = useState(false);
   const [withdrawDialog, setWithdrawDialog] = useState(false);
 
-  const account = useAccount();
-
-  const {data} = useRetrieveStaker({
-    address: account.address
-  });
-  const tvlStrategies = useMemo(() => {
-    return Object.entries((data as any)?.tvl?.tvlStrategies || {});
-  }, [data])
+  const stakedBalance = useStakedBalance();
 
   return <div className=" border rounded-md p-4 h-96 bg-gray-100 flex flex-col justify-between">
     <div className=" font-bold text-xl">My Staked Assets</div>
     <div className=" flex flex-col justify-between flex-grow">
       <div className=" flex flex-col gap-2 my-8">
-        {tvlStrategies.map((tvl) => {
+        {stakedBalance.map((st) => {
           return <StakedToken 
-          key={tvl[0]} 
-          icon={AssetMap[tvl[0]]?.logoUrl}
-          name={tvl[0]} 
-          amount={`${tvl[1] || 0}`}
+          key={st.token?.address} 
+          icon={st.token?.logoUrl}
+          name={st.token?.name} 
+          amount={`${formatUnits(st.balance, st.token?.decimals || 1)}`}
           />
         })}
       </div>
@@ -145,6 +138,14 @@ export const DelegatedOperator = () => {
   const { address } = useAccount();
 
 
+  const {data: delegatedTo} = useReadContract({
+    abi: DelegationManagerABI,
+    address: delegationManagerAddress,
+    functionName: "delegatedTo",
+    args: [
+      address as Address,
+    ],
+  });
 
   const handleUnDelegate = useCallback(async () => {
     setLoading(true);
@@ -169,8 +170,8 @@ export const DelegatedOperator = () => {
     address: account.address
   });
   const operatorAddress = useMemo(() => {
-    return ((data as any)?.operatorAddress);
-  }, [data]);
+    return delegatedTo || ((data as any)?.operatorAddress);
+  }, [data, delegatedTo]);
 
 
   const operatorData = useRetrieveOperator({
