@@ -4,9 +4,9 @@ import {
 } from "@/components/ui/dialog"
 import React, { FC, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { Asset } from "@/config/token";
-import { ArrowRightIcon, LayersIcon } from "@radix-ui/react-icons";
+import { ArrowRightIcon, LayersIcon, ReloadIcon } from "@radix-ui/react-icons";
 import { Input } from "../ui/input";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { DialogProps, DialogTitle } from "@radix-ui/react-dialog";
@@ -19,6 +19,8 @@ import { useForm, useWatch } from "react-hook-form";
 import { Form, FormField } from "../ui/form";
 import BigNumber from "bignumber.js";
 import { SelectOperatorDialog } from "./SelectOperatorDialog";
+import { useToast } from "@/hooks/use-toast";
+import { waitForTransactionReceipt } from "viem/actions";
 
 export interface ReStakeProps {
   asset?: Asset,
@@ -37,6 +39,10 @@ export const ReStakeDialog = React.forwardRef<
 
   const [loading, setLoading] = useState(false);
   const {address} = useAccount();
+
+  const client = usePublicClient();
+
+  const { toast } = useToast();
 
   const {data: allowance} = useReadContract({
     abi: erc20Abi,
@@ -58,6 +64,7 @@ export const ReStakeDialog = React.forwardRef<
   const handleWriteContract = useCallback(async () => {
     if(!asset) return;
     setLoading(true);
+    let instance;
     try {
       const value = form.getValues();
       const amount = value.amount;
@@ -74,12 +81,24 @@ export const ReStakeDialog = React.forwardRef<
           parseUnits(amount, asset?.decimals),
         ],
       });
+      instance = toast({
+        duration: 100000,
+        title: "Depositing",
+        description: (<div className=" flex items-center">
+          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+          <div>Depositing</div>
+        </div>)
+      })
+      await waitForTransactionReceipt(client!, {
+        hash: txHash,
+      })
       console.log(txHash);
     } catch (error) {
       console.log(error);
     }
+    instance?.dismiss();
     setLoading(false);
-  }, [asset, form, writeContractAsync]);
+  }, [asset, client, form, toast, writeContractAsync]);
 
 
 
@@ -117,6 +136,7 @@ export const ReStakeDialog = React.forwardRef<
   const handleApprove = useCallback(async () => {
     if(!asset) return;
     setLoading(true);
+    let instance;
     try {
       const value = form.getValues();
       const amount = value.amount;
@@ -132,12 +152,24 @@ export const ReStakeDialog = React.forwardRef<
           parseUnits("1000000000000000", 18),
         ],
       });
+      instance = toast({
+        duration: 100000,
+        title: "Approving",
+        description: (<div className=" flex items-center">
+          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+          <div>Approving</div>
+        </div>)
+      })
+      await waitForTransactionReceipt(client!, {
+        hash: txHash,
+      })
       console.log(txHash);
     } catch (error) {
       console.log(error);
     }
+    instance?.dismiss();
     setLoading(false);
-  }, [asset, form, writeContractAsync]);
+  }, [asset, client, form, toast, writeContractAsync]);
 
   const [operatorDialog, setOperatorDialog] = useState(false);
 
