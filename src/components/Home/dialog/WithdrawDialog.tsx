@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { useWithdrawAbleAssets } from "@/hooks/useWithdrawableAssets";
-import { Address } from "viem";
+import { Address, formatUnits } from "viem";
 // import { Address } from "viem";
 
 export const WithdrawDialog = React.forwardRef<
@@ -123,7 +123,7 @@ export const WithdrawDialog = React.forwardRef<
                       key={item.address} 
                       icon={item?.logoUrl}
                       name={item.name} 
-                      amount={`${item.balance || 0}`}
+                      amount={`${formatUnits(tw.amount || BigInt(0), item.decimals)}`}
                       />
                   </div>
                   </div>

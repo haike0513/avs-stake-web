@@ -17,11 +17,19 @@ export const useWithdrawAbleAssets = () => {
 
       const withdrawals = withdrawalsData.filter((wd) => {
         return wd.shares.some((share: any) => share.strategyAddress.toLowerCase() ===at.strategyAddress?.toLowerCase());
-      })
+      });
+
+      const allShares = withdrawalsData.map((wd) => {
+        return wd.shares.filter((share: any) => share.strategyAddress.toLowerCase() === at.strategyAddress?.toLowerCase());
+      }).flat();
+
+      const allBalance = allShares.reduce((total, item) => {
+        return BigInt(item.shares) + total;
+      }, BigInt(0))
 
       return {
         asset: at,
-        amount: BigInt(0),
+        amount: BigInt(allBalance),
         withdrawals: withdrawals,
       }
     }).filter((t) => t.withdrawals.length > 0);

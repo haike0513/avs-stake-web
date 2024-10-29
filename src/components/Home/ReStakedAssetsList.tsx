@@ -66,18 +66,21 @@ export const ReStakedAsset: FC<OperatorItem> = ({
       </div>
       
       <div className="col-span-6 sm:col-span-2 flex items-center justify-center sm:justify-end gap-6 sm:gap-2 my-2 sm:my-0">
-        <Button variant={"outline"} onClick={() => {
+        {/* <Button variant={"outline"} onClick={() => {
             // setClaimDialog(true);
           }}>
             <a className=" w-full h-full">
               Claim
             </a>
-        </Button>
+        </Button> */}
         <ClaimRewardDialog open={claimDialog} onOpenChange={(open) => {
             setClaimDialog(open);
           }}/>
         {/* <a href={`${baseAppURL}/operator/${operator}`} target="_blank"> */}
           <Button onClick={() => {
+            // setOperatorDialog(true);
+            // return;
+
             if(!operator) {
               setOperatorDialog(true);
             } else {
