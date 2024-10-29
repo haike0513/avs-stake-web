@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import '@rainbow-me/rainbowkit/styles.css';
 import { QueryProviders } from "@/providers/QueryProvider";
+import { Toaster } from "@/components/ui/toaster"
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <QueryProviders>
           {children}
         </QueryProviders>
+        <Toaster />
       </body>
     </html>
   );

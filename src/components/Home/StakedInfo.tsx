@@ -5,14 +5,17 @@ import { SelectOperatorDialog } from "./SelectOperatorDialog";
 import { UnStakeDialog } from "./dialog/UnStakeDialog";
 import { WithdrawDialog } from "./dialog/WithdrawDialog";
 import { UnDelegateDialog } from "./dialog/UnDelegateDialog";
-import { useRetrieveStaker, useRetrieveQueuedWithdrawals, useRetrieveOperator, useRetrieveQueuedAndWithdrawableWithdrawals } from "@/data/eigen";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useRetrieveQueuedWithdrawals, useRetrieveOperator, useRetrieveQueuedAndWithdrawableWithdrawals } from "@/data/eigen";
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 
 import { delegationManagerAddress } from "@/config/contracts";
 import { Address, formatUnits } from "viem";
 import { useStakedBalance } from "@/hooks/useStakedBalance";
 import { assets } from "@/config/token";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { waitForTransactionReceipt } from "viem/actions";
+import { useToast } from "@/hooks/use-toast";
 
 export interface StakedTokenProps {
   name?: string;
@@ -171,7 +174,7 @@ export const DelegatedOperator = () => {
 
   const { writeContractAsync } = useWriteContract();
 
-  const [, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { address } = useAccount();
 
@@ -185,10 +188,16 @@ export const DelegatedOperator = () => {
     ],
   });
 
+  const client = usePublicClient()
+
+  const { toast } = useToast()
+
+
   const handleUnDelegate = useCallback(async () => {
     setLoading(true);
+    let instance;
     try {
-      await writeContractAsync({
+      const txHash = await writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "undelegate",
@@ -196,20 +205,36 @@ export const DelegatedOperator = () => {
           address as Address,
         ],
       });
+
+      instance = toast({
+        duration: 100000,
+        title: "Undelegating",
+        description: (<div className=" flex items-center">
+          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+          <div>Undelegating</div>
+        </div>)
+      })
+      await waitForTransactionReceipt(client!, {
+        hash: txHash,
+      })
+
+      instance.dismiss();
+      // result.status === 
     } catch (error) {
       console.log(error);
+      instance?.dismiss();
     }
     setLoading(false);
-  }, [address, writeContractAsync]);
+  }, [address, client, toast, writeContractAsync]);
 
-  const account = useAccount();
+  // const account = useAccount();
 
-  const { data } = useRetrieveStaker({
-    address: account.address
-  });
+  // const { data } = useRetrieveStaker({
+  //   address: account.address
+  // });
   const operatorAddress = useMemo(() => {
-    return delegatedTo || ((data as any)?.operatorAddress);
-  }, [data, delegatedTo]);
+    return delegatedTo === "0x0000000000000000000000000000000000000000" ? undefined : delegatedTo;
+  }, [delegatedTo]);
 
 
   const operatorData = useRetrieveOperator({
@@ -224,10 +249,21 @@ export const DelegatedOperator = () => {
     <div className=" flex justify-between">
       <div className=" font-bold text-xl">My Delegated Operator</div>
       { operatorAddress && <div>
-        <Button variant={"outline"} onClick={() => {
+        <Button variant={"outline"}
+        disabled={loading}
+        onClick={() => {
         // setUnDelegateDialog(true);
         handleUnDelegate();
-      }}>UnDelegate</Button>
+      }}>
+        <span className="mr-2 h-4 w-4 animate-spin">
+          {loading && <ReloadIcon className="h-4 w-4 animate-spin" />}
+        </span>
+
+
+        UnDelegate
+        <span className="ml-2 h-4 w-4 animate-spin">
+        </span>
+        </Button>
          <UnDelegateDialog open={unDelegateDialog} onOpenChange={(open) => {
           setUnDelegateDialog(open);
       }}/>

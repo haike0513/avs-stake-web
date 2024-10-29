@@ -6,11 +6,14 @@ import { useRetrieveOperators } from "@/data/eigen";
 import React, { FC, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 
-import { useWriteContract } from "wagmi";
+import { usePublicClient, useWriteContract } from "wagmi";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { Address } from "viem";
 import { DialogProps } from "@radix-ui/react-dialog";
+import { waitForTransactionReceipt } from "viem/actions";
+import { useToast } from "@/hooks/use-toast";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 interface OperatorItemProps {
   name: string;
@@ -24,15 +27,72 @@ interface OperatorItemProps {
 export const OperatorItem: FC<OperatorItemProps> = ({
   name,
   logo,
-  handleDelegate,
+  operator,
 }) => {
+
+
+  const { writeContractAsync } = useWriteContract();
+
+  const [loading, setLoading] = useState(false);
+
+  const client = usePublicClient();
+
+  const { toast } = useToast()
+
+
+  const handleDelegateAction = useCallback(async (operator: string) => {
+    setLoading(true);
+    let instance
+    try {
+      const txHash = await writeContractAsync({
+        abi: DelegationManagerABI,
+        address: delegationManagerAddress,
+        functionName: "delegateTo",
+        args: [
+          operator as Address,
+          {
+            signature: "0x",
+            expiry: BigInt(0),
+          },
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
+      });
+        instance = toast({
+        duration: 100000,
+        title: "Undelegating",
+        description: (<div className=" flex items-center">
+          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+          <div>Undelegating</div>
+        </div>)
+      })
+      await waitForTransactionReceipt(client!, {
+        hash: txHash,
+      })
+    } catch (error) {
+      console.log(error);
+    }
+    instance?.dismiss()
+    setLoading(false);
+  }, [client, toast, writeContractAsync]);
   return <div className="">
     <div className="grid grid-cols-3 items-center">
       <img className=" rounded-md" src={logo || ''}  width={40} height={40}/>
       <div>{name}</div>
       <div><Button variant={"secondary"}
-        onClick={handleDelegate}
-      >Delegate</Button></div>
+        disabled={loading}
+        onClick={(e) => {
+          e.stopPropagation();
+          // e.preventDefault();
+          handleDelegateAction(operator!)
+        }}
+      >
+        <span className="mr-2 h-4 w-4 animate-spin">
+              {loading && <ReloadIcon className="h-4 w-4 animate-spin" />}
+            </span>
+        Delegate
+        <span className="mr-2 h-4 w-4 animate-spin">
+        </span>
+        </Button></div>
     </div>
     </div>
 }

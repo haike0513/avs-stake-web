@@ -14,6 +14,7 @@ import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { useStakedBalance } from "@/hooks/useStakedBalance";
 import { Address, formatUnits, parseUnits } from "viem";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 export const UnStakeDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
@@ -24,7 +25,7 @@ export const UnStakeDialog = React.forwardRef<
 
 
   const { writeContractAsync } = useWriteContract();
-  const [, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
 
   const [checkedToken, setCheckedToken] = useState<string>();
@@ -118,10 +119,18 @@ export const UnStakeDialog = React.forwardRef<
             {/* <div className=" w-20"></div> */}
           </div>
           <Button className=" w-full"
+            disabled={loading}
             onClick={() => {
               handleUnStake();
             }}
-          >UnStake</Button>
+          >
+            <span className="mx-2 h-4 w-4 animate-spin">
+              {loading && <ReloadIcon className="h-4 w-4 animate-spin" />}
+            </span>
+            UnStake
+            <span className="mx-2 h-4 w-4 animate-spin">
+            </span>
+            </Button>
         </div>
       </div>
     </DialogContent>

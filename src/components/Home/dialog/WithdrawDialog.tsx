@@ -14,6 +14,7 @@ import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { useWithdrawAbleAssets } from "@/hooks/useWithdrawableAssets";
 import { Address, formatUnits } from "viem";
+import { ReloadIcon } from "@radix-ui/react-icons";
 // import { Address } from "viem";
 
 export const WithdrawDialog = React.forwardRef<
@@ -34,7 +35,7 @@ export const WithdrawDialog = React.forwardRef<
 
 
   const { writeContractAsync } = useWriteContract();
-  const [, setLoading] = useState(false);
+  const [ loading, setLoading] = useState(false);
 
   const availableTokenWithdrawals = useWithdrawAbleAssets();
 
@@ -132,10 +133,19 @@ export const WithdrawDialog = React.forwardRef<
             </div>
             <div className=" w-full">
             <Button className=" w-full"
+
+              disabled={loading}
               onClick={() => {
                 handleWithdraw();
               }}
-            >Withdraw</Button>
+            >
+            <span className="mx-2 h-4 w-4 animate-spin">
+              {loading && <ReloadIcon className="h-4 w-4 animate-spin" />}
+            </span>
+              Withdraw
+            <span className="mx-2 h-4 w-4 animate-spin">
+            </span>  
+            </Button>
           </div>
         </div>
         }}
