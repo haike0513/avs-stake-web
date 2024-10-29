@@ -70,16 +70,63 @@ export const retrieveQueuedWithdrawals = async (address?: string) => {
   const baseURL = getEigenAPIURL();
   // https://api.eigenexplorer.com/stakers/{address}/withdrawals/queued_withdrawable
 
-  return fetch(`${baseURL}/stakers/${address}/withdrawals/queued_withdrawable`, options)
-  .then(response => response.json());
-  // return fetch(`${baseURL}/stakers/${address}/withdrawals/queued`, options)
-  // .then(response => response.json())
+  return fetch(`${baseURL}/stakers/${address.toLowerCase()}/withdrawals/queued`, options)
+  .then(response => response.json())
 }
 export function useRetrieveQueuedWithdrawals(props: { address?: string }) {
   const query = useSuspenseQuery({
     queryKey: ['retrieveQueuedWithdrawals', props.address],
     queryFn: async () => {
       const res: unknown = await retrieveQueuedWithdrawals(props?.address)
+      return res
+    },
+  })
+
+  return query
+}
+
+
+export const retrieveQueuedAndWithdrawableWithdrawals = async (address?: string) => {
+  if(!address) return {};
+  const options = {method: 'GET'};
+  const baseURL = getEigenAPIURL();
+  // https://api.eigenexplorer.com/stakers/{address}/withdrawals/queued_withdrawable
+
+  return fetch(`${baseURL}/stakers/${address?.toLowerCase()}/withdrawals/queued_withdrawable`, options)
+  .then(response => response.json());
+  // return fetch(`${baseURL}/stakers/${address}/withdrawals/queued`, options)
+  // .then(response => response.json())
+}
+export function useRetrieveQueuedAndWithdrawableWithdrawals(props: { address?: string }) {
+  const query = useSuspenseQuery({
+    queryKey: ['retrieveQueuedAndWithdrawableWithdrawals', props.address],
+    queryFn: async () => {
+      const res: unknown = await retrieveQueuedAndWithdrawableWithdrawals(props?.address)
+      return res
+    },
+  })
+
+  return query
+}
+
+
+
+export const retrieveCompleteWithdrawals = async (address?: string) => {
+  if(!address) return {};
+  const options = {method: 'GET'};
+  const baseURL = getEigenAPIURL();
+  // https://api.eigenexplorer.com/stakers/{address}/withdrawals/queued_withdrawable
+
+  return fetch(`${baseURL}/stakers/${address?.toLowerCase()}/withdrawals/completed`, options)
+  .then(response => response.json());
+  // return fetch(`${baseURL}/stakers/${address}/withdrawals/queued`, options)
+  // .then(response => response.json())
+}
+export function useRetrieveCompleteWithdrawals(props: { address?: string }) {
+  const query = useSuspenseQuery({
+    queryKey: ['retrieveCompleteWithdrawals', props.address],
+    queryFn: async () => {
+      const res: unknown = await retrieveQueuedAndWithdrawableWithdrawals(props?.address)
       return res
     },
   })

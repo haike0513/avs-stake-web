@@ -5,13 +5,14 @@ import { SelectOperatorDialog } from "./SelectOperatorDialog";
 import { UnStakeDialog } from "./dialog/UnStakeDialog";
 import { WithdrawDialog } from "./dialog/WithdrawDialog";
 import { UnDelegateDialog } from "./dialog/UnDelegateDialog";
-import { useRetrieveStaker, useRetrieveQueuedWithdrawals, useRetrieveOperator } from "@/data/eigen";
+import { useRetrieveStaker, useRetrieveQueuedWithdrawals, useRetrieveOperator, useRetrieveQueuedAndWithdrawableWithdrawals } from "@/data/eigen";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 
 import { delegationManagerAddress } from "@/config/contracts";
 import { Address, formatUnits } from "viem";
 import { useStakedBalance } from "@/hooks/useStakedBalance";
+import { assets } from "@/config/token";
 
 export interface StakedTokenProps {
   name?: string;
@@ -41,14 +42,36 @@ export const QueuedWithdrawalsAsset = () => {
     address: account.address
   });
 
+  // const {data} = useRetrieveQueuedAndWithdrawableWithdrawals({
+  //   address: account.address
+  // });
+
+  const availableToken: any[] = useMemo(() => {
+    return ((data as any)?.data || []).map((item: any) => {
+      return item.shares || []
+    }).flat()
+  }, [data]);
+  const showTokens = useMemo(() => {
+    return assets.filter((asset) => {
+      return availableToken.some((token) => token.strategyAddress?.toLowerCase() === asset.strategyAddress?.toLowerCase())
+    })
+  }, [availableToken])
+
   console.log("QueuedWithdrawalsAsset", data);
 
   return <div>
     <div className=" flex flex-col justify-between flex-grow">
 
-      <div>        
-        <div className=" bg-white rounded-sm h-12 my-2 flex items-center px-4 text-sm text-gray-400">
+      <div className=" flex justify-between items-center h-12 my-2 bg-white rounded-sm  px-4">        
+        <div className="  flex items-center  text-sm text-gray-400">
           <div>In Escrow</div>
+        </div>
+        <div>
+          {showTokens.map((item) => {
+            return <div key={item.strategyAddress} className="">
+              <img className=" h-6 w-6" src={item.logoUrl} />
+            </div>
+          })}
         </div>
       </div>
 
@@ -60,18 +83,33 @@ export const QueuedWithdrawalsAsset = () => {
 export const AvailableWithdrawalsAsset = () => {
   const account = useAccount();
 
-  const {data} = useRetrieveQueuedWithdrawals({
+  const {data} = useRetrieveQueuedAndWithdrawableWithdrawals({
     address: account.address
   });
 
-  console.log("QueuedWithdrawalsAsset", data);
-
+  const availableToken: any[] = useMemo(() => {
+    return ((data as any)?.data || []).map((item: any) => {
+      return item.shares || []
+    }).flat()
+  }, [data]);
+  const showTokens = useMemo(() => {
+    return assets.filter((asset) => {
+      return availableToken.some((token) => token.strategyAddress?.toLowerCase() === asset.strategyAddress?.toLowerCase())
+    })
+  }, [availableToken])
   return <div>
     <div className=" flex flex-col justify-between flex-grow">
 
-      <div>        
-        <div className=" bg-white rounded-sm h-12 my-2 flex items-center px-4 text-sm text-gray-400">
+      <div className="flex justify-between items-center bg-white h-12 my-2 px-4 rounded-sm">        
+        <div className="flex items-center text-sm text-gray-400">
           <div>Available to withdraw</div>
+        </div>
+        <div>
+          {showTokens.map((item) => {
+            return <div key={item.strategyAddress} className="">
+              <img className=" h-6 w-6" src={item.logoUrl} />
+            </div>
+          })}
         </div>
       </div>
 

@@ -2,17 +2,18 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
-import { useRetrieveStaker } from "@/data/eigen";
 import React, { useCallback, useMemo, useState } from "react";
-import { useAccount, useWriteContract } from "wagmi";
+import { useWriteContract } from "wagmi";
 import { StakedToken } from "../StakedInfo";
-import { AssetMap } from "@/config/token";
+import { assets } from "@/config/token";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
+import { useWithdrawAbleAssets } from "@/hooks/useWithdrawableAssets";
+import { Address } from "viem";
 // import { Address } from "viem";
 
 export const WithdrawDialog = React.forwardRef<
@@ -27,40 +28,62 @@ export const WithdrawDialog = React.forwardRef<
     }
   });
 
-
-  const account = useAccount();
-
-  const {data} = useRetrieveStaker({
-    address: account.address
+  const watchValue = useWatch({
+    control: form.control,
   });
-  const tvlStrategies = useMemo(() => {
-    return Object.entries((data as any)?.tvl?.tvlStrategies || {});
-  }, [data])
+
 
   const { writeContractAsync } = useWriteContract();
   const [, setLoading] = useState(false);
 
+  const availableTokenWithdrawals = useWithdrawAbleAssets();
+
+  const params = useMemo(() => {
+    return availableTokenWithdrawals.filter((ft) => {
+      const watchItems: string[] = watchValue.items || [];
+      return watchItems.some(wt => ft.asset.address.toLowerCase() === wt.toLowerCase())
+    }).map((item) => item.withdrawals).flat();
+  }, [availableTokenWithdrawals, watchValue.items])
+
   const handleWithdraw = useCallback(async () => {
     setLoading(true);
     try {
+      const contractParams = params;
+      const args = contractParams.map((p)=> {
+        const tokens: string[] = (p.shares.map((item: any) => item.strategyAddress) as string[])
+        .map((s) => assets.find((a) => a.strategyAddress?.toLowerCase() === s.toLowerCase())!.address);
+        return {
+          withdrawal:{
+            staker: p.stakerAddress,
+            delegatedTo:p.delegatedTo,
+            withdrawer: p.withdrawerAddress,
+            nonce:p.nonce ,
+            startBlock: p.createdAtBlock,
+            strategies: p.shares.map((item: any) => item.strategyAddress),
+            shares:p.shares.map((item: any) => item.shares),
+          },
+          tokens:tokens as Address[],
+          middlewareTimesIndex: BigInt(0),
+          receiveAsTokens: false,
+        }
+      })
+
       await writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "completeQueuedWithdrawals",
         args: [
-          [],
-          [[]],
-          [],
-          []
+          args.map((item) => item.withdrawal),
+          args.map((item) => item.tokens),
+          args.map((item) => item.middlewareTimesIndex),
+          args.map((item) => item.receiveAsTokens)
         ],
       });
     } catch (error) {
       console.log(error);
     }
     setLoading(false);
-  }, [writeContractAsync]);
-  
-  
+  }, [params, writeContractAsync]);
   
   return(
   <Dialog
@@ -75,20 +98,21 @@ export const WithdrawDialog = React.forwardRef<
         render={({field}) => {
           return         <div className="flex flex-col gap-4">
           <div className=" flex flex-col gap-2 my-8">
-              {tvlStrategies.map((item) => {
+              {availableTokenWithdrawals.map((tw) => {
+                const item = tw.asset;
                 return <FormItem 
-                key={item[0]} 
+                key={item.address} 
                >
                 <div className=" flex items-center">
                   <FormControl>
                   <Checkbox
-                      checked={field.value?.includes(item[0])}
+                      checked={field.value?.includes(item.address)}
                       onCheckedChange={(checked) => {
                         return checked
-                          ? field.onChange([...field.value, item[0]])
+                          ? field.onChange([...field.value, item.address])
                           : field.onChange(
                               field.value?.filter(
-                                (value: any) => value !== item[0]
+                                (value: any) => value !== item.address
                               )
                             )
                       }}
@@ -96,10 +120,10 @@ export const WithdrawDialog = React.forwardRef<
                   </FormControl>
                   <div className=" flex-grow">
                       <StakedToken 
-                      key={item[0]} 
-                      icon={AssetMap[item[0]]?.logoUrl}
-                      name={item[0]} 
-                      amount={`${item[1] || 0}`}
+                      key={item.address} 
+                      icon={item?.logoUrl}
+                      name={item.name} 
+                      amount={`${item.balance || 0}`}
                       />
                   </div>
                   </div>
