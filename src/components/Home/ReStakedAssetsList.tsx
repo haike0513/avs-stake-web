@@ -1,5 +1,5 @@
 "use client"
-import { FC, Suspense, useMemo, useState } from "react";
+import { FC, Suspense, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { ReStakeDialog } from "./ReStakeDialog";
 // import { useRetrieveOperators } from "@/data/eigen";
@@ -8,7 +8,7 @@ import { ClaimRewardDialog } from "./dialog/ClaimRewardDialog";
 // import Image from "next/image";
 import { Asset, assets } from '@/config/token';
 import { useTokensInfo } from "@/hooks/useTokenInfo";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { formatUnits } from "viem";
 
 import {BigNumber} from 'bignumber.js';
@@ -17,6 +17,11 @@ import { SelectOperatorDialog } from "./SelectOperatorDialog";
 import { delegationManagerAddress } from "@/config/contracts";
 import { Address } from "viem";
 import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
+import { ABI as RewardsCoordinatorABI} from '@/abi/RewardsCoordinator';
+
+import { toast } from "@/hooks/use-toast";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { waitForTransactionReceipt } from "viem/actions";
 
 interface OperatorItem {
   name: string;
@@ -43,6 +48,61 @@ export const ReStakedAsset: FC<OperatorItem> = ({
   const [claimDialog, setClaimDialog] = useState(false);
   const [operatorDialog, setOperatorDialog] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+  const {address} = useAccount();
+
+  const client = usePublicClient();
+  const { writeContractAsync } = useWriteContract();
+
+  const handleClaim = useCallback(async () => {
+    if(!address) return;
+    setLoading(true);
+    let instance;
+    try {
+      const txHash = await writeContractAsync({
+        abi: RewardsCoordinatorABI,
+        address: delegationManagerAddress,
+        functionName: "processClaim",
+        args: [
+          {
+            rootIndex: 0,
+            earnerIndex: 0,
+            earnerLeaf: {
+              earner: address,
+              earnerTokenRoot: address,
+            },
+            earnerTreeProof: address,
+            tokenIndices: [],
+            tokenTreeProofs: [],
+            tokenLeaves: [],
+          }
+          ,
+          address
+        ],
+      });
+      instance = toast({
+        duration: 100000,
+        title: "Unstaking",
+        description: (<div className=" flex items-center">
+          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+          <div>Unstaking</div>
+        </div>)
+      })
+      const result = await waitForTransactionReceipt(client!, {
+        hash: txHash,
+      })
+      if (result.status === "success") {
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    instance?.dismiss();
+    setLoading(false);
+  }, [client, writeContractAsync]);
+  
+
+
+
   // const baseAppURL = getEigenAppURL();
   return (
     <div className=" grid grid-cols-6 rounded-lg py-4">
@@ -66,13 +126,17 @@ export const ReStakedAsset: FC<OperatorItem> = ({
       </div>
       
       <div className="col-span-6 sm:col-span-2 flex items-center justify-center sm:justify-end gap-6 sm:gap-2 my-2 sm:my-0">
-        {/* <Button variant={"outline"} onClick={() => {
+        <Button 
+        disabled={loading}
+        className=" hidden"
+        variant={"outline"} onClick={() => {
             // setClaimDialog(true);
+            handleClaim()
           }}>
             <a className=" w-full h-full">
               Claim
             </a>
-        </Button> */}
+        </Button>
         <ClaimRewardDialog open={claimDialog} onOpenChange={(open) => {
             setClaimDialog(open);
           }}/>

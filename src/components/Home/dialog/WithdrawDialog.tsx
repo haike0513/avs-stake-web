@@ -85,10 +85,10 @@ export const WithdrawDialog = React.forwardRef<
       });
       instance = toast({
         duration: 100000,
-        title: "Unstaking",
+        title: "Withdraw",
         description: (<div className=" flex items-center">
           <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Unstaking</div>
+          <div>Withdrawing</div>
         </div>)
       })
       const result = await waitForTransactionReceipt(client!, {
