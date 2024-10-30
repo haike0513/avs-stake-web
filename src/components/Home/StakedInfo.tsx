@@ -14,8 +14,7 @@ import { Address, formatUnits } from "viem";
 import { useStakedBalance } from "@/hooks/useStakedBalance";
 import { assets } from "@/config/token";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { waitForTransactionReceipt } from "viem/actions";
-import { useToast } from "@/hooks/use-toast";
+import { toastContract } from "@/toast/contract";
 
 export interface StakedTokenProps {
   name?: string;
@@ -179,7 +178,7 @@ export const DelegatedOperator = () => {
   const { address } = useAccount();
 
 
-  const {data: delegatedTo} = useReadContract({
+  const {data: delegatedTo, refetch: deleteReFetch} = useReadContract({
     abi: DelegationManagerABI,
     address: delegationManagerAddress,
     functionName: "delegatedTo",
@@ -190,14 +189,11 @@ export const DelegatedOperator = () => {
 
   const client = usePublicClient()
 
-  const { toast } = useToast()
-
 
   const handleUnDelegate = useCallback(async () => {
     setLoading(true);
-    let instance;
     try {
-      const txHash = await writeContractAsync({
+      const contractPost = writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "undelegate",
@@ -206,26 +202,24 @@ export const DelegatedOperator = () => {
         ],
       });
 
-      instance = toast({
-        duration: 100000,
-        title: "Undelegating",
-        description: (<div className=" flex items-center">
-          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Undelegating</div>
-        </div>)
-      })
-      await waitForTransactionReceipt(client!, {
-        hash: txHash,
-      })
-
-      instance.dismiss();
-      // result.status === 
+      await toastContract(contractPost, {
+        client: client!,
+        pending: {
+          title: "undelegate...",
+        },
+        success: {
+          title: "undelegate",
+        },
+        failure: {
+          title: "undelegate failed",
+        }
+      });
+      deleteReFetch();
     } catch (error) {
       console.log(error);
-      instance?.dismiss();
     }
     setLoading(false);
-  }, [address, client, toast, writeContractAsync]);
+  }, [address, client, deleteReFetch, writeContractAsync]);
 
   // const account = useAccount();
 

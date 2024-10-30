@@ -11,9 +11,8 @@ import { ABI as DelegationManagerABI} from '@/abi/DelegationManager';
 import { delegationManagerAddress } from "@/config/contracts";
 import { Address } from "viem";
 import { DialogProps } from "@radix-ui/react-dialog";
-import { waitForTransactionReceipt } from "viem/actions";
-import { useToast } from "@/hooks/use-toast";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { toastContract } from "@/toast/contract";
 
 interface OperatorItemProps {
   name: string;
@@ -37,14 +36,11 @@ export const OperatorItem: FC<OperatorItemProps> = ({
 
   const client = usePublicClient();
 
-  const { toast } = useToast()
-
 
   const handleDelegateAction = useCallback(async (operator: string) => {
     setLoading(true);
-    let instance
     try {
-      const txHash = await writeContractAsync({
+      const contractPost = writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "delegateTo",
@@ -57,23 +53,24 @@ export const OperatorItem: FC<OperatorItemProps> = ({
           "0x0000000000000000000000000000000000000000000000000000000000000000",
         ],
       });
-        instance = toast({
-        duration: 100000,
-        title: "Undelegating",
-        description: (<div className=" flex items-center">
-          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Undelegating</div>
-        </div>)
-      })
-      await waitForTransactionReceipt(client!, {
-        hash: txHash,
-      })
+
+      await toastContract(contractPost, {
+        client: client!,
+        pending: {
+          title: "Delegate...",
+        },
+        success: {
+          title: "Delegate",
+        },
+        failure: {
+          title: "Delegate failed",
+        }
+      });
     } catch (error) {
       console.log(error);
     }
-    instance?.dismiss()
     setLoading(false);
-  }, [client, toast, writeContractAsync]);
+  }, [client, writeContractAsync]);
   return <div className="">
     <div className="grid grid-cols-3 items-center">
       <img className=" rounded-md" src={logo || ''}  width={40} height={40}/>
