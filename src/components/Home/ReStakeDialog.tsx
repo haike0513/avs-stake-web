@@ -6,7 +6,7 @@ import React, { FC, useCallback, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { Asset } from "@/config/token";
-import { ArrowRightIcon, LayersIcon, ReloadIcon } from "@radix-ui/react-icons";
+import { ArrowRightIcon, LayersIcon } from "@radix-ui/react-icons";
 import { Input } from "../ui/input";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { DialogProps, DialogTitle } from "@radix-ui/react-dialog";
@@ -19,8 +19,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { Form, FormField } from "../ui/form";
 import BigNumber from "bignumber.js";
 import { SelectOperatorDialog } from "./SelectOperatorDialog";
-import { useToast } from "@/hooks/use-toast";
-import { waitForTransactionReceipt } from "viem/actions";
+import { toastContract } from "@/toast/contract";
 
 export interface ReStakeProps {
   asset?: Asset,
@@ -42,8 +41,6 @@ export const ReStakeDialog = React.forwardRef<
 
   const client = usePublicClient();
 
-  const { toast } = useToast();
-
   const {data: allowance, refetch: allowanceRefetch} = useReadContract({
     abi: erc20Abi,
     address: asset?.address as Address,
@@ -64,14 +61,13 @@ export const ReStakeDialog = React.forwardRef<
   const handleWriteContract = useCallback(async () => {
     if(!asset) return;
     setLoading(true);
-    let instance;
     try {
       const value = form.getValues();
       const amount = value.amount;
 
       console.log(asset);
       console.log(amount);
-      const txHash = await writeContractAsync({
+      const contractPost = writeContractAsync({
         abi: StrategyManagerABI,
         address: strategyManagerAddress,
         functionName: "depositIntoStrategy",
@@ -81,27 +77,27 @@ export const ReStakeDialog = React.forwardRef<
           parseUnits(amount, asset?.decimals),
         ],
       });
-      instance = toast({
-        duration: 100000,
-        title: "Depositing",
-        description: (<div className=" flex items-center">
-          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Depositing</div>
-        </div>)
-      })
-      const result = await waitForTransactionReceipt(client!, {
-        hash: txHash,
+
+      const result = await toastContract(contractPost, {
+        client: client!,
+        pending: {
+          title: "Depositing...",
+        },
+        success: {
+          title: "Deposited",
+        },
+        failure: {
+          title: "Deposited failed",
+        }
       });
       if(result.status === "success") {
         props?.onOpenChange?.(false);
       }
-      console.log(txHash);
     } catch (error) {
       console.log(error);
     }
-    instance?.dismiss();
     setLoading(false);
-  }, [asset, client, form, props, toast, writeContractAsync]);
+  }, [asset, client, form, props, writeContractAsync]);
 
 
 
@@ -139,14 +135,13 @@ export const ReStakeDialog = React.forwardRef<
   const handleApprove = useCallback(async () => {
     if(!asset) return;
     setLoading(true);
-    let instance;
     try {
       const value = form.getValues();
       const amount = value.amount;
 
       console.log(asset);
       console.log(amount);
-      const txHash = await writeContractAsync({
+      const contractPost = writeContractAsync({
         abi: erc20Abi,
         address: asset.address as Address,
         functionName: "approve",
@@ -155,27 +150,27 @@ export const ReStakeDialog = React.forwardRef<
           parseUnits("1000000000000000", 18),
         ],
       });
-      instance = toast({
-        duration: 100000,
-        title: "Approving",
-        description: (<div className=" flex items-center">
-          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Approving</div>
-        </div>)
-      })
-      const result = await waitForTransactionReceipt(client!, {
-        hash: txHash,
+
+      const result = await toastContract(contractPost, {
+        client: client!,
+        pending: {
+          title: "Approving...",
+        },
+        success: {
+          title: "Approved",
+        },
+        failure: {
+          title: "Approve failed",
+        }
       });
       if(result.status === "success") {
         allowanceRefetch();
       }
-      console.log(txHash);
     } catch (error) {
       console.log(error);
     }
-    instance?.dismiss();
     setLoading(false);
-  }, [allowanceRefetch, asset, client, form, toast, writeContractAsync]);
+  }, [allowanceRefetch, asset, client, form, writeContractAsync]);
 
   const [operatorDialog, setOperatorDialog] = useState(false);
 

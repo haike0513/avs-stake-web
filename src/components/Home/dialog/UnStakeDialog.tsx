@@ -15,8 +15,9 @@ import { delegationManagerAddress } from "@/config/contracts";
 import { useStakedBalance } from "@/hooks/useStakedBalance";
 import { Address, formatUnits, parseUnits } from "viem";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { waitForTransactionReceipt } from "viem/actions";
-import { toast } from "@/hooks/use-toast";
+// import { waitForTransactionReceipt } from "viem/actions";
+// import { toast } from "@/hooks/use-toast";
+import { toastContract } from "@/toast/contract";
 
 export const UnStakeDialog = React.forwardRef<
   React.ElementRef<typeof Dialog>,
@@ -45,7 +46,7 @@ export const UnStakeDialog = React.forwardRef<
 
   const handleUnStake = useCallback(async () => {
     setLoading(true);
-    let instance;
+    // let instance;
     try {
       const value = form.getValues();
       const amount = value.amount;
@@ -53,7 +54,21 @@ export const UnStakeDialog = React.forwardRef<
       const share = parseUnits(amount, checkedStaked?.token?.decimals || 0);
       const strategyAddress = [checkedStaked.token?.strategyAddress as Address];
       const shares = [share];
-      const txHash = await writeContractAsync({
+      // const txHash = await writeContractAsync({
+      //   abi: DelegationManagerABI,
+      //   address: delegationManagerAddress,
+      //   functionName: "queueWithdrawals",
+      //   args: [
+      //     [
+      //       {
+      //         strategies: strategyAddress,
+      //         shares,
+      //         withdrawer: address,
+      //       }
+      //     ]
+      //   ],
+      // });
+      const contractPost = writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "queueWithdrawals",
@@ -67,24 +82,36 @@ export const UnStakeDialog = React.forwardRef<
           ]
         ],
       });
-      instance = toast({
-        duration: 100000,
-        title: "Unstaking",
-        description: (<div className=" flex items-center">
-          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Unstaking</div>
-        </div>)
-      })
-      const result = await waitForTransactionReceipt(client!, {
-        hash: txHash,
-      })
+      const result = await toastContract(contractPost, {
+        client: client!,
+        pending: {
+          title: "Unstaking...",
+        },
+        success: {
+          title: "Unstaked",
+        },
+        failure: {
+          title: "Unstaked failed",
+        }
+      });
+      // instance = toast({
+      //   duration: 100000,
+      //   title: "Unstaking",
+      //   description: (<div className=" flex items-center">
+      //     <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+      //     <div>Unstaking</div>
+      //   </div>)
+      // })
+      // // const result = await waitForTransactionReceipt(client!, {
+      //   hash: txHash,
+      // })
       if (result.status === "success") {
         props?.onOpenChange?.(false);
       }
     } catch (error) {
       console.log(error);
     }
-    instance?.dismiss();
+    // instance?.dismiss();
     setLoading(false);
   }, [address, checkedStaked, client, form, props, writeContractAsync]);
   

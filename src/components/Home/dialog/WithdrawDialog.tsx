@@ -15,8 +15,7 @@ import { delegationManagerAddress } from "@/config/contracts";
 import { useWithdrawAbleAssets } from "@/hooks/useWithdrawableAssets";
 import { Address, formatUnits } from "viem";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { toast } from "@/hooks/use-toast";
-import { waitForTransactionReceipt } from "viem/actions";
+import { toastContract } from "@/toast/contract";
 // import { Address } from "viem";
 
 export const WithdrawDialog = React.forwardRef<
@@ -50,7 +49,6 @@ export const WithdrawDialog = React.forwardRef<
 
   const handleWithdraw = useCallback(async () => {
     setLoading(true);
-    let instance;
     try {
       const contractParams = params;
       const args = contractParams.map((p)=> {
@@ -72,7 +70,7 @@ export const WithdrawDialog = React.forwardRef<
         }
       })
 
-      const txHash = await writeContractAsync({
+      const contractPost = writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "completeQueuedWithdrawals",
@@ -83,24 +81,25 @@ export const WithdrawDialog = React.forwardRef<
           args.map((item) => item.receiveAsTokens)
         ],
       });
-      instance = toast({
-        duration: 100000,
-        title: "Withdraw",
-        description: (<div className=" flex items-center">
-          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
-          <div>Withdrawing</div>
-        </div>)
-      })
-      const result = await waitForTransactionReceipt(client!, {
-        hash: txHash,
-      })
+
+      const result = await toastContract(contractPost, {
+        client: client!,
+        pending: {
+          title: "Withdraw...",
+        },
+        success: {
+          title: "Withdraw",
+        },
+        failure: {
+          title: "Withdraw failed",
+        }
+      });
       if (result.status === "success") {
         props?.onOpenChange?.(false);
       }
     } catch (error) {
       console.log(error);
     }
-    instance?.dismiss();
     setLoading(false);
   }, [client, params, props, writeContractAsync]);
   
