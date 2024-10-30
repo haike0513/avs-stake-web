@@ -44,7 +44,7 @@ export const ReStakeDialog = React.forwardRef<
 
   const { toast } = useToast();
 
-  const {data: allowance} = useReadContract({
+  const {data: allowance, refetch: allowanceRefetch} = useReadContract({
     abi: erc20Abi,
     address: asset?.address as Address,
     functionName: "allowance",
@@ -89,16 +89,19 @@ export const ReStakeDialog = React.forwardRef<
           <div>Depositing</div>
         </div>)
       })
-      await waitForTransactionReceipt(client!, {
+      const result = await waitForTransactionReceipt(client!, {
         hash: txHash,
-      })
+      });
+      if(result.status === "success") {
+        props?.onOpenChange?.(false);
+      }
       console.log(txHash);
     } catch (error) {
       console.log(error);
     }
     instance?.dismiss();
     setLoading(false);
-  }, [asset, client, form, toast, writeContractAsync]);
+  }, [asset, client, form, props, toast, writeContractAsync]);
 
 
 
@@ -160,16 +163,19 @@ export const ReStakeDialog = React.forwardRef<
           <div>Approving</div>
         </div>)
       })
-      await waitForTransactionReceipt(client!, {
+      const result = await waitForTransactionReceipt(client!, {
         hash: txHash,
-      })
+      });
+      if(result.status === "success") {
+        allowanceRefetch();
+      }
       console.log(txHash);
     } catch (error) {
       console.log(error);
     }
     instance?.dismiss();
     setLoading(false);
-  }, [asset, client, form, toast, writeContractAsync]);
+  }, [allowanceRefetch, asset, client, form, toast, writeContractAsync]);
 
   const [operatorDialog, setOperatorDialog] = useState(false);
 

@@ -3,7 +3,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog"
 import React, { useCallback, useMemo, useState } from "react";
-import { useWriteContract } from "wagmi";
+import { usePublicClient, useWriteContract } from "wagmi";
 import { StakedToken } from "../StakedInfo";
 import { assets } from "@/config/token";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { delegationManagerAddress } from "@/config/contracts";
 import { useWithdrawAbleAssets } from "@/hooks/useWithdrawableAssets";
 import { Address, formatUnits } from "viem";
 import { ReloadIcon } from "@radix-ui/react-icons";
+import { toast } from "@/hooks/use-toast";
+import { waitForTransactionReceipt } from "viem/actions";
 // import { Address } from "viem";
 
 export const WithdrawDialog = React.forwardRef<
@@ -32,7 +34,7 @@ export const WithdrawDialog = React.forwardRef<
   const watchValue = useWatch({
     control: form.control,
   });
-
+  const client = usePublicClient();
 
   const { writeContractAsync } = useWriteContract();
   const [ loading, setLoading] = useState(false);
@@ -48,6 +50,7 @@ export const WithdrawDialog = React.forwardRef<
 
   const handleWithdraw = useCallback(async () => {
     setLoading(true);
+    let instance;
     try {
       const contractParams = params;
       const args = contractParams.map((p)=> {
@@ -69,7 +72,7 @@ export const WithdrawDialog = React.forwardRef<
         }
       })
 
-      await writeContractAsync({
+      const txHash = await writeContractAsync({
         abi: DelegationManagerABI,
         address: delegationManagerAddress,
         functionName: "completeQueuedWithdrawals",
@@ -80,11 +83,26 @@ export const WithdrawDialog = React.forwardRef<
           args.map((item) => item.receiveAsTokens)
         ],
       });
+      instance = toast({
+        duration: 100000,
+        title: "Unstaking",
+        description: (<div className=" flex items-center">
+          <ReloadIcon className="h-6 w-6 animate-spin mx-4" />
+          <div>Unstaking</div>
+        </div>)
+      })
+      const result = await waitForTransactionReceipt(client!, {
+        hash: txHash,
+      })
+      if (result.status === "success") {
+        props?.onOpenChange?.(false);
+      }
     } catch (error) {
       console.log(error);
     }
+    instance?.dismiss();
     setLoading(false);
-  }, [params, writeContractAsync]);
+  }, [client, params, props, writeContractAsync]);
   
   return(
   <Dialog
