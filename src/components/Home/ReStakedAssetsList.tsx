@@ -39,6 +39,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
   asset,
   name,
   // tvl,
+  withdrawableBalance,
   reStakedBalance,
   balance,
   logo,
@@ -120,7 +121,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
           <div>{new BigNumber(balance || 0).toFormat(4)}</div>
         </div>
         <div className="flex justify-end items-center">
-          <div>{totalStakers}</div>
+          <div>{new BigNumber(withdrawableBalance || 0).toFormat(4)}</div>
         </div>
         <div className="flex justify-end items-center">
           <div>{new BigNumber(reStakedBalance || 0).toFormat(4)}</div>
