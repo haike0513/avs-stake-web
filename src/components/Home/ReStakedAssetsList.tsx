@@ -22,6 +22,7 @@ import { ABI as RewardsCoordinatorABI} from '@/abi/RewardsCoordinator';
 import { toast } from "@/hooks/use-toast";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { waitForTransactionReceipt } from "viem/actions";
+import { useWithdrawAbleAssets } from "@/hooks/useWithdrawableAssets";
 
 interface OperatorItem {
   name: string;
@@ -29,6 +30,7 @@ interface OperatorItem {
   logo?: string;
   balance?: string;
   reStakedBalance?: string;
+  withdrawableBalance?: string;
   totalStakers?: string;
   operator?: string;
   asset?: Asset;
@@ -98,7 +100,7 @@ export const ReStakedAsset: FC<OperatorItem> = ({
     }
     instance?.dismiss();
     setLoading(false);
-  }, [client, writeContractAsync]);
+  }, [address, client, writeContractAsync]);
   
 
 
@@ -202,6 +204,7 @@ export  function ReStakedAssetsPages() {
       address as Address,
     ],
   });
+  const availableTokenWithdrawals = useWithdrawAbleAssets();
   return (
     <div className="flex flex-col gap-2">
       <div className=" grid grid-cols-6">
@@ -217,16 +220,20 @@ export  function ReStakedAssetsPages() {
         {tokens.map((item) => {
           const staked = stakedBalanced.find((st) => {
             return st.token?.address.toLowerCase() === item.address.toLowerCase();
-          })
+          });
+          const withdrawable = availableTokenWithdrawals.find((at) => {
+            return at.asset.address.toLowerCase() === item.address.toLowerCase();
+          });
           return <ReStakedAsset key={item?.address} 
           asset={item}
           reStakedBalance={formatUnits(staked?.balance || BigInt(0), item.decimals)}
           balance={formatUnits(item.balance as bigint, item.decimals)}
-            name={item.name}
-            tvl={item.name}
-            logo={item.logoUrl}
-            totalStakers={"0"}
-            operator={delegatedTo}
+          withdrawableBalance={formatUnits(withdrawable?.balance || BigInt(0), item.decimals)}
+          name={item.name}
+          tvl={item.name}
+          logo={item.logoUrl}
+          totalStakers={"0"}
+          operator={delegatedTo}
           />
         })}
       </div>
