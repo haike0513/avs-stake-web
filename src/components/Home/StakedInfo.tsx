@@ -266,15 +266,20 @@ export const DelegatedOperator = () => {
     <div className=" flex-grow flex flex-col items-center justify-center">
       {operatorAddress ? <div className=" h-full">
           <div>
-          <div className=" flex items-center gap-4">
+          <div className=" flex items-center gap-4 mt-8">
             <div>
               <img className="h-10 w-10 rounded-md" src={operator?.metadataLogo} />
             </div>
-            <div>{operator?.metadataName}</div>
+            <div className=" text-xl font-bold">{operator?.metadataName}</div>
+            <a href={`https://holesky.eigenlayer.xyz/operator/${operator?.address}`} target="_blank">
+              <div className="text-xs w-40 pt-2 truncate">
+                {operator?.address}
+              </div>
+            </a>
           </div>
 
-          <div>{operator?.address}</div>
-          <div>{operator?.metadataDescription}</div>
+
+          <div className=" my-4 text-gray-500">{operator?.metadataDescription}</div>
         </div>
       </div> : <div className="flex-grow flex flex-col items-center justify-center">
       <div>
